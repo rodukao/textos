@@ -101,17 +101,21 @@ node bench/tools/xml-ao-redor.mjs <arquivo.docx> "trecho do texto"      # estrut
 node bench/tools/paragrafos-xml.mjs <arquivo.docx> "trecho do texto" 3  # parágrafos do corpo a partir do trecho
 node bench/tools/ancora-xml.mjs <arquivo.docx> "trecho"                 # propriedades da imagem/caixa ancorada
 node bench/tools/caixa-de-texto-xml.mjs <arquivo.docx> "trecho"         # conteúdo da caixa de texto
+node bench/tools/estilo-xml.mjs <arquivo.docx> <styleId>                # definição de um estilo e padrões
 ```
 
 ### Situação atual
 
-Documentos com legendas em caixas de texto já voltam **idênticos no Word** ao salvar. Pendências
-conhecidas, por impacto:
+**Salvar:** todos os documentos testados (reais e de exemplo) voltam **idênticos no Word** ao
+salvar sem edição — 0% de diferença em todas as páginas.
 
-1. o tamanho de algumas imagens muda ao salvar, alterando a paginação
-2. altura de linha diferente do Word em espaçamento múltiplo (ex.: Cambria a 1,08)
-3. quebras de linha ao lado de imagens flutuantes
-4. a cópia de compatibilidade com o Word 2007 (`mc:Fallback`) de caixas de texto não é mantida
+Pendências conhecidas, por impacto:
+
+1. **exibição:** altura de linha diferente do Word em espaçamento múltiplo (ex.: Cambria a 1,08) —
+   no Word cabe uma linha a mais por página
+2. **exibição:** quebras de linha ao lado de imagens flutuantes
+3. **salvar:** a cópia de compatibilidade com o Word 2007 (`mc:Fallback`) de caixas de texto e as
+   marcas de revisão ortográfica (`w:proofErr`) não são mantidas (sem efeito visual no Word atual)
 
 ## Atenção: não atualize para o SuperDoc 2.x
 
