@@ -91,6 +91,18 @@ O motor fica em um repositório próprio, [rodukao/textos-engine](https://github
 3. teste no Textos com `npm install <caminho do .tgz>` e rode a bancada;
 4. publique uma nova *Release* no `textos-engine` e aponte o `package.json` do Textos para ela.
 
+### Ferramentas de diagnóstico (`bench/tools/`)
+
+Para investigar uma diferença apontada pela bancada, comparando o `.docx` original com o
+`roundtrip.docx` salvo pelo Textos (em `bench/out/<documento>/`):
+
+```bash
+node bench/tools/xml-ao-redor.mjs <arquivo.docx> "trecho do texto"      # estrutura XML em volta do trecho
+node bench/tools/paragrafos-xml.mjs <arquivo.docx> "trecho do texto" 3  # parágrafos do corpo a partir do trecho
+node bench/tools/ancora-xml.mjs <arquivo.docx> "trecho"                 # propriedades da imagem/caixa ancorada
+node bench/tools/caixa-de-texto-xml.mjs <arquivo.docx> "trecho"         # conteúdo da caixa de texto
+```
+
 ### Situação atual
 
 Documentos com legendas em caixas de texto já voltam **idênticos no Word** ao salvar. Pendências
