@@ -1,0 +1,192 @@
+:root {
+  --bg: #e8eaed;
+  --chrome: #ffffff;
+  --chrome-border: #d6d9de;
+  --text: #1f2328;
+  --muted: #5f6670;
+  --hover: #eef1f5;
+  --accent: #2563eb;
+
+  color-scheme: light;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Ubuntu, sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* A moldura segue o tema do sistema; as folhas continuam brancas, como no papel. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1b1d21;
+    --chrome: #26292e;
+    --chrome-border: #3a3e45;
+    --text: #e6e8eb;
+    --muted: #a0a6ae;
+    --hover: #33373d;
+    color-scheme: dark;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ---------- Barra de arquivo ---------- */
+
+.filebar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 6px 12px;
+  background: var(--chrome);
+  border-bottom: 1px solid var(--chrome-border);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.doc-title {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dirty-dot {
+  color: var(--accent);
+}
+
+.file-actions {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.file-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.file-button:hover {
+  background: var(--hover);
+}
+
+.file-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ---------- Barra de formatação (do SuperDoc) ---------- */
+
+.sd-toolbar {
+  /* A barra do SuperDoc é clara; mantemos um fundo claro também no tema escuro. */
+  background: #fff;
+  border-bottom: 1px solid var(--chrome-border);
+  color-scheme: light;
+}
+
+/* ---------- Área das folhas ---------- */
+
+.workspace {
+  flex: 1;
+  overflow: auto;
+  padding: 24px 16px 48px;
+  color-scheme: light;
+}
+
+/* Centraliza as folhas; a largura mínima evita espremer o aviso de carregamento. */
+.workspace > div {
+  margin: 0 auto;
+  width: fit-content;
+  min-width: min(100%, 816px);
+}
+
+.statusbar {
+  display: flex;
+  gap: 16px;
+  padding: 4px 12px;
+  background: var(--chrome);
+  border-top: 1px solid var(--chrome-border);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.statusbar .spacer {
+  flex: 1;
+}
+
+/* ---------- Telas estreitas ---------- */
+
+@media (max-width: 760px) {
+  .file-button span {
+    display: none;
+  }
+
+  .workspace {
+    padding: 8px 0 24px;
+  }
+}
+
+/* ---------- Impressão / PDF ---------- */
+
+@page {
+  margin: 0;
+}
+
+@media print {
+  body {
+    background: #fff;
+  }
+
+  .filebar,
+  .sd-toolbar,
+  .statusbar {
+    display: none;
+  }
+
+  .app,
+  .workspace {
+    display: block;
+    height: auto;
+    overflow: visible;
+    padding: 0;
+  }
+
+  .superdoc-page {
+    break-after: page;
+    box-shadow: none !important;
+    margin: 0 !important;
+  }
+}

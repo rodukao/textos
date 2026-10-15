@@ -1,0 +1,28 @@
+[package]
+name = "textos"
+version = "0.1.0"
+description = "Textos — editor de textos compatível com o Word"
+authors = ["RoduApps"]
+license = "AGPL-3.0-or-later"
+repository = "https://github.com/rodukao/textos"
+edition = "2021"
+
+[lib]
+# O sufixo _lib evita conflito de nome com o binário no Windows.
+name = "textos_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true
