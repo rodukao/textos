@@ -70,6 +70,9 @@ function plainText(xml) {
     const name = qname(el);
     // Separadores de nota (w:type="separator" etc.) são decoração gerada pelo Word, não texto.
     if ((name === 'w:footnote' || name === 'w:endnote') && el.getAttributeNS(Object.keys(NS)[0], 'type')) return;
+    // mc:Fallback é uma cópia (VML) do mesmo conteúdo do mc:Choice, só para Word 2007;
+    // contá-la duplicaria o texto de caixas de texto. A perda dela aparece na lista de XML.
+    if (name === 'mc:Fallback') return;
     if (name === 'w:t' || name === 'w:delText') out += el.textContent;
     else if (name === 'w:tab') out += '\t';
     else if (name === 'w:br' || name === 'w:cr') out += '\n';

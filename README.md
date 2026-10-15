@@ -93,12 +93,13 @@ O motor fica em um repositório próprio, [rodukao/textos-engine](https://github
 
 ### Situação atual
 
-O Textos ainda **perde formatação ao salvar** alguns documentos. Pendências conhecidas, por impacto:
+Documentos com legendas em caixas de texto já voltam **idênticos no Word** ao salvar. Pendências
+conhecidas, por impacto:
 
-1. texto de caixas de texto (ex.: legendas ao lado de imagens) some ao salvar
-2. o tamanho de algumas imagens muda ao salvar, alterando a paginação
-3. altura de linha diferente do Word em espaçamento múltiplo (ex.: Cambria a 1,08)
-4. quebras de linha ao lado de imagens flutuantes
+1. o tamanho de algumas imagens muda ao salvar, alterando a paginação
+2. altura de linha diferente do Word em espaçamento múltiplo (ex.: Cambria a 1,08)
+3. quebras de linha ao lado de imagens flutuantes
+4. a cópia de compatibilidade com o Word 2007 (`mc:Fallback`) de caixas de texto não é mantida
 
 ## Atenção: não atualize para o SuperDoc 2.x
 
