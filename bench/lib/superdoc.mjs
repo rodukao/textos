@@ -6,6 +6,9 @@ import { createServer } from 'vite';
 
 const harnessDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'harness');
 
+/** Perfil de "dispositivo lento": CPU N vezes mais lenta que a desta máquina. */
+export const SLOW_CPU = 4;
+
 export async function startSuperDoc() {
   const server = await createServer({
     root: harnessDir,
@@ -38,8 +41,22 @@ export async function startSuperDoc() {
     try {
       await page.goto(url);
       await page.waitForFunction(() => !!window.bench);
+      const b64 = Buffer.from(bytes).toString('base64');
+
+      // Desempenho: abre num dispositivo lento simulado, em página própria.
+      const perfPage = await context.newPage();
+      await perfPage.goto(url);
+      await perfPage.waitForFunction(() => !!window.bench);
+      const cdp = await context.newCDPSession(perfPage);
+      await cdp.send('Performance.enable');
+      await cdp.send('Emulation.setCPUThrottlingRate', { rate: SLOW_CPU });
+      const slow = await perfPage.evaluate(([b, n]) => window.bench.load(b, n), [b64, name]);
+      const metrics = Object.fromEntries((await cdp.send('Performance.getMetrics')).metrics.map((m) => [m.name, m.value]));
+      const perf = { slowOpenMs: slow.openMs, heapMB: Math.round(metrics.JSHeapUsedSize / 1048576), domNodes: metrics.Nodes };
+      await perfPage.close();
+
       const t0 = Date.now();
-      const loaded = await page.evaluate(([b64, n]) => window.bench.load(b64, n), [Buffer.from(bytes).toString('base64'), name]);
+      const loaded = await page.evaluate(([b, n]) => window.bench.load(b, n), [b64, name]);
       const loadMs = Date.now() - t0;
 
       const pageEls = await page.$$('.superdoc-page');
@@ -57,9 +74,9 @@ export async function startSuperDoc() {
       } catch (e) {
         exportError = String(e).slice(0, 500);
       }
-      return { pages: loaded.pages ?? pageEls.length, errors: loaded.errors, loadMs, screenshots, exported, exportError, consoleErrors, blockedHosts: [...blocked] };
+      return { pages: loaded.pages ?? pageEls.length, errors: loaded.errors, loadMs, openMs: loaded.openMs, perf, screenshots, exported, exportError, consoleErrors, blockedHosts: [...blocked] };
     } catch (e) {
-      return { pages: 0, errors: [String(e).slice(0, 500)], loadMs: null, screenshots: [], exported: null, exportError: 'não carregou', consoleErrors, blockedHosts: [...blocked] };
+      return { pages: 0, errors: [String(e).slice(0, 500)], loadMs: null, openMs: null, perf: null, screenshots: [], exported: null, exportError: 'não carregou', consoleErrors, blockedHosts: [...blocked] };
     } finally {
       await context.close();
     }

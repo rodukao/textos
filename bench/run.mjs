@@ -96,7 +96,7 @@ async function main() {
       d.bytes = await readFile(d.file);
       log(`[${i + 1}/${docs.length}] SuperDoc: ${path.basename(d.file)}`);
       const r = await sd.process(d.bytes, path.basename(d.file));
-      d.superdoc = { pages: r.pages, errors: r.errors, loadMs: r.loadMs, exportError: r.exportError, consoleErrors: r.consoleErrors.slice(0, 10), blockedHosts: r.blockedHosts };
+      d.superdoc = { pages: r.pages, errors: r.errors, loadMs: r.loadMs, openMs: r.openMs, perf: r.perf, exportError: r.exportError, consoleErrors: r.consoleErrors.slice(0, 10), blockedHosts: r.blockedHosts };
       d.sdShots = [];
       for (const [k, png] of r.screenshots.entries()) {
         const name = `superdoc-${k + 1}.png`;

@@ -32,7 +32,8 @@ function waitForLayout(state, quietMs = 1200, maxMs = 60000) {
 window.bench = {
   /** Carrega o .docx (base64) e resolve quando estiver diagramado. */
   async load(b64, name = 'documento.docx') {
-    const state = { lastPagination: performance.now(), pages: null, errors: [] };
+    const start = performance.now();
+    const state = { lastPagination: start, pages: null, errors: [] };
     const file = new File([fromBase64(b64)], name, {
       type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     });
@@ -56,7 +57,8 @@ window.bench = {
     await document.fonts.ready;
     await waitForLayout(state);
     window.__benchState = state;
-    return { pages: state.pages, errors: state.errors };
+    // Tempo até a última diagramação: documento aberto e pronto para ler.
+    return { pages: state.pages, errors: state.errors, openMs: Math.round(state.lastPagination - start) };
   },
 
   /** Exporta o documento atual para .docx (base64), sem nenhuma edição. */

@@ -16,7 +16,7 @@ que usa o próprio Word como referência.
 
 | Camada | Tecnologia |
 |---|---|
-| Motor de documentos (`.docx`) | [SuperDoc](https://github.com/superdoc-dev/superdoc) **1.47.2** (AGPL-3.0) — OOXML nativo, ProseMirror, paginação |
+| Motor de documentos (`.docx`) | [textos-engine](https://github.com/rodukao/textos-engine) — nosso fork AGPL do SuperDoc 1.x (OOXML nativo, ProseMirror, paginação) |
 | Interface | React 19 + TypeScript + Vite |
 | Desktop | [Tauri 2](https://tauri.app) (Rust + WebView do sistema) |
 
@@ -78,6 +78,18 @@ Resultado em `bench/out/report.html` (fora do controle de versão). Para cada `.
 - **Exibição** — a página desenhada pelo Textos comparada com a do Word, tolerando suavização de
   fonte e deslocamentos de até 2 px. Na imagem de diferenças: vermelho = só no Word,
   azul = só no Textos, laranja = cor diferente.
+- **Desempenho** — tempo para abrir num dispositivo simulado com CPU 4× mais lenta, e memória usada.
+  O Textos deve continuar rápido em máquinas modestas: nenhuma melhoria de fidelidade pode piorar isso.
+
+## Motor (textos-engine)
+
+O motor fica em um repositório próprio, [rodukao/textos-engine](https://github.com/rodukao/textos-engine)
+(branch `textos`), e o Textos instala o pacote publicado nas *Releases* dele. Para alterar o motor:
+
+1. clone o `textos-engine` ao lado deste repositório e faça a mudança na branch `textos`;
+2. gere o pacote (`pnpm run build:superdoc` e `pnpm --dir packages/superdoc pack`);
+3. teste no Textos com `npm install <caminho do .tgz>` e rode a bancada;
+4. publique uma nova *Release* no `textos-engine` e aponte o `package.json` do Textos para ela.
 
 ### Situação atual
 
@@ -92,9 +104,9 @@ O Textos ainda **perde formatação ao salvar** alguns documentos. Pendências c
 
 A partir de certa versão 2.x, o SuperDoc passou a depender de `@superdoc/docx-engine`, um pacote
 **proprietário** cuja licença proíbe, entre outras coisas, usá-lo em editores de documentos
-concorrentes e redistribuí-lo. Isso é incompatível com o Textos. Por isso a versão está fixada em
-`1.47.2` (100% AGPL). Antes de atualizar qualquer dependência, confira as licenças de **todo** o
-pacote, incluindo as dependências indiretas.
+concorrentes e redistribuí-lo. Isso é incompatível com o Textos. Por isso o motor é um fork da
+linha 1.x (100% AGPL), e nada do 2.x é usado como referência. Antes de adicionar ou atualizar
+qualquer dependência, confira as licenças de **toda** a árvore, incluindo as dependências indiretas.
 
 ## Atalhos
 

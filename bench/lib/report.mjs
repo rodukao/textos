@@ -1,9 +1,11 @@
 // Gera bench/out/report.html a partir dos resultados.
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { SLOW_CPU } from './superdoc.mjs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const maxDiff = (pages) => (pages?.length ? Math.max(...pages.map((p) => (p.diff == null ? 100 : p.diff))) : null);
+const fmtSec = (ms) => (ms == null ? '—' : `${(ms / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} s`);
 const fmtPct = (x) => (x == null ? '—' : `${x.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%`);
 
 /** Veredito de "salvar sem perda". */
@@ -77,6 +79,8 @@ export async function writeReport(outDir, docs) {
         <td><span class="badge ${dv.cls}">${dv.label}</span></td>
         <td class="num">${d.superdoc.pages ?? '—'}</td>
         <td class="num">${fmtPct(maxDiff(d.result.display.pages))}</td>
+        <td class="num">${fmtSec(d.superdoc.perf?.slowOpenMs)}</td>
+        <td class="num">${d.superdoc.perf?.heapMB != null ? `${d.superdoc.perf.heapMB} MB` : '—'}</td>
       </tr>`;
     })
     .join('');
@@ -93,7 +97,7 @@ export async function writeReport(outDir, docs) {
       ].filter(Boolean);
       return `<section id="${esc(d.id)}">
         <h2>${esc(path.basename(d.file))}</h2>
-        <p class="muted">${esc(d.file)} · SuperDoc carregou em ${d.superdoc.loadMs ?? '—'} ms</p>
+        <p class="muted">${esc(d.file)} · abriu em ${fmtSec(d.superdoc.openMs)} (nesta máquina) e ${fmtSec(d.superdoc.perf?.slowOpenMs)} com CPU ${SLOW_CPU}× mais lenta · memória ${d.superdoc.perf?.heapMB ?? '—'} MB</p>
         ${problems.length ? `<ul class="problems">${problems.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : ''}
         <details open><summary>Salvar sem perda — ${saveVerdict(d).label}</summary>
           ${xmlSection(d.result.save.xml)}
@@ -143,12 +147,14 @@ export async function writeReport(outDir, docs) {
     <div class="card">Documentos<br><b>${docs.length}</b></div>
     <div class="card">Salvos sem perda<br><b class="good-t">${count(saveVerdict, 'good')}</b> / ${docs.length}</div>
     <div class="card">Exibição muito próxima<br><b class="good-t">${count(displayVerdict, 'good')}</b> / ${docs.length}</div>
+    <div class="card">Abrir no pior caso (CPU ${SLOW_CPU}× lenta)<br><b>${fmtSec(Math.max(0, ...docs.map((d) => d.superdoc.perf?.slowOpenMs ?? 0)))}</b></div>
   </div>
   <p class="muted"><b>Salvar sem perda:</b> o Textos abre e salva o arquivo sem editar; o Word abre o resultado e comparamos com o original, página a página.
   <b>Exibição:</b> página desenhada pelo Textos comparada com a do Word. "Diferença" = pixels diferentes ÷ pixels com conteúdo.</p>
   <div class="scroll"><table><thead><tr>
     <th>Documento</th><th class="num">Págs. Word</th><th>Salvar</th><th class="num">Maior dif.</th><th class="num">Itens XML perdidos</th>
     <th>Exibição</th><th class="num">Págs. Textos</th><th class="num">Maior dif.</th>
+    <th class="num">Abrir (CPU ${SLOW_CPU}× lenta)</th><th class="num">Memória</th>
   </tr></thead><tbody>${rows}</tbody></table></div>
   ${details}
 </main></body></html>`;
