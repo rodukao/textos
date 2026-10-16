@@ -33,7 +33,7 @@ window.bench = {
   /** Carrega o .docx (base64) e resolve quando estiver diagramado. */
   async load(b64, name = 'documento.docx') {
     const start = performance.now();
-    const state = { lastPagination: start, pages: null, errors: [] };
+    const state = { lastPagination: start, pages: null, errors: [], paginations: 0 };
     const file = new File([fromBase64(b64)], name, {
       type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     });
@@ -46,6 +46,7 @@ window.bench = {
         onReady: () => resolve(),
         onPaginationUpdate: (p) => {
           state.lastPagination = performance.now();
+          state.paginations += 1;
           state.pages = p.totalPages;
         },
         onException: (e) => {
@@ -58,7 +59,13 @@ window.bench = {
     await waitForLayout(state);
     window.__benchState = state;
     // Tempo até a última diagramação: documento aberto e pronto para ler.
-    return { pages: state.pages, errors: state.errors, openMs: Math.round(state.lastPagination - start) };
+    return {
+      pages: state.pages,
+      errors: state.errors,
+      openMs: Math.round(state.lastPagination - start),
+      // Quantas vezes o documento foi diagramado ao abrir (reflows por fontes que chegam tarde etc.).
+      paginations: state.paginations,
+    };
   },
 
   /** Exporta o documento atual para .docx (base64), sem nenhuma edição. */

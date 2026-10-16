@@ -128,18 +128,19 @@ salvar sem edição — 0% de diferença em todas as páginas.
 **Altura de linha:** igual à do Word em espaçamento simples, múltiplo, "pelo menos" e em parágrafos
 vazios; as quebras de página do documento de exemplo com várias fontes e espaçamentos coincidem.
 
+**Larguras de texto:** o texto é medido e desenhado com as larguras de projeto da fonte, como no
+Word (no Windows a 100%, o navegador usaria larguras ajustadas pelo *hinting*, até ~1,8% maiores em
+Cambria). Custo atual: abrir fica de 2% a 6% mais lento; otimizar depois.
+
 Pendências conhecidas, por impacto:
 
 1. **exibição:** controle de linhas órfãs/viúvas (ligado por padrão no Word) não é feito na
    paginação — o Textos pode deixar a última linha de um parágrafo sozinha no topo da página
 2. **exibição:** posição do texto dentro da linha em espaçamento múltiplo — o Word deixa o espaço
    extra abaixo do texto, o Textos o divide acima e abaixo (≈ 5 px em Times a 1,5)
-3. **exibição:** larguras de texto — o Chromium no Windows (escala 100%) mede e desenha o texto com
-   as larguras ajustadas pelo *hinting* da fonte; o Word usa as larguras de projeto. Em Cambria o
-   texto fica ~1,8% mais largo e algumas linhas quebram antes (em Calibri a diferença é mínima)
-4. **exibição:** página de objetos ancorados — o Word põe o objeto na página do ponto de âncora
+3. **exibição:** página de objetos ancorados — o Word põe o objeto na página do ponto de âncora
    (ex.: o fim de um parágrafo que continua na página seguinte); o Textos usa o começo do parágrafo
-5. **salvar:** a cópia de compatibilidade com o Word 2007 (`mc:Fallback`) de caixas de texto e as
+4. **salvar:** a cópia de compatibilidade com o Word 2007 (`mc:Fallback`) de caixas de texto e as
    marcas de revisão ortográfica (`w:proofErr`) não são mantidas (sem efeito visual no Word atual)
 
 ## Atenção: não atualize para o SuperDoc 2.x
