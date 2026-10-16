@@ -104,17 +104,33 @@ node bench/tools/caixa-de-texto-xml.mjs <arquivo.docx> "trecho"         # conte�
 node bench/tools/estilo-xml.mjs <arquivo.docx> <styleId>                # definição de um estilo e padrões
 ```
 
+Para a altura de linha, que no Word depende das métricas de cada fonte:
+
+```bash
+node bench/tools/metricas-fonte.mjs C:\Windows\Fonts\calibri.ttf        # altura simples da fonte (× tamanho)
+powershell -File bench/tools/altura-linha-word.ps1 -Fontes "Calibri,Cambria" -Linhas "240,259"  # medida no Word
+```
+
+O motor usa a altura simples do Word (métricas GDI da fonte, não 1,15 × tamanho) vezes o múltiplo,
+arredondada para cima em 1/960 de polegada; a tabela de fontes fica em
+`packages/layout-engine/measuring/dom/src/wordLineMetrics.ts` no `textos-engine`.
+
 ### Situação atual
 
 **Salvar:** todos os documentos testados (reais e de exemplo) voltam **idênticos no Word** ao
 salvar sem edição — 0% de diferença em todas as páginas.
 
+**Altura de linha:** igual à do Word em espaçamento simples, múltiplo, "pelo menos" e em parágrafos
+vazios; as quebras de página do documento de exemplo com várias fontes e espaçamentos coincidem.
+
 Pendências conhecidas, por impacto:
 
-1. **exibição:** altura de linha diferente do Word em espaçamento múltiplo (ex.: Cambria a 1,08) —
-   no Word cabe uma linha a mais por página
-2. **exibição:** quebras de linha ao lado de imagens flutuantes
-3. **salvar:** a cópia de compatibilidade com o Word 2007 (`mc:Fallback`) de caixas de texto e as
+1. **exibição:** controle de linhas órfãs/viúvas (ligado por padrão no Word) não é feito na
+   paginação — o Textos pode deixar a última linha de um parágrafo sozinha no topo da página
+2. **exibição:** posição do texto dentro da linha em espaçamento múltiplo — o Word deixa o espaço
+   extra abaixo do texto, o Textos o divide acima e abaixo (≈ 5 px em Times a 1,5)
+3. **exibição:** quebras de linha ao lado de imagens flutuantes
+4. **salvar:** a cópia de compatibilidade com o Word 2007 (`mc:Fallback`) de caixas de texto e as
    marcas de revisão ortográfica (`w:proofErr`) não são mantidas (sem efeito visual no Word atual)
 
 ## Atenção: não atualize para o SuperDoc 2.x

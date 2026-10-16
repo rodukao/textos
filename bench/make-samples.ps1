@@ -1,8 +1,9 @@
 ﻿<#
   Gera documentos de exemplo com o próprio Word, cobrindo vários tipos de formatação.
   Uso: powershell -File bench/make-samples.ps1 -OutDir bench/corpus
+       powershell -File bench/make-samples.ps1 -OutDir bench/corpus -Only 04   (só os documentos indicados)
 #>
-param([Parameter(Mandatory = $true)][string]$OutDir)
+param([Parameter(Mandatory = $true)][string]$OutDir, [string[]]$Only)
 
 $ErrorActionPreference = 'Stop'
 New-Item -ItemType Directory -Force $OutDir | Out-Null
@@ -21,6 +22,7 @@ function Log($m) { Add-Content -Encoding UTF8 $logFile "$(Get-Date -Format 'HH:m
 
 function New-Doc { $word.Documents.Add() }
 function Save-Doc($doc, $name) {
+  if ($Only -and -not ($Only | Where-Object { $name.StartsWith($_) })) { $doc.Close([ref]$wdDoNotSaveChanges); return }
   # [string]: o Join-Path devolve um PSObject, e o COM do Word trava ao recebê-lo no SaveAs2.
   [string]$path = Join-Path $OutDir $name
   Log "salvando $path"
@@ -146,6 +148,34 @@ try {
   $p = Add-Para $d 'Texto inserido com controle de alterações ativo.' -1
   $d.TrackRevisions = $false
   Save-Doc $d '03-revisao-objetos.docx'
+
+  # ---------- 4. Espaçamento entre linhas múltiplo em várias páginas ----------
+  # A altura da linha depende da fonte (Calibri, Cambria, Times) e do múltiplo; um erro pequeno
+  # por linha se acumula e muda a quebra de página.
+  $texto = 'O espaçamento entre linhas do Word depende das métricas de cada fonte, e não apenas do tamanho: ' +
+    'a mesma configuração de 1,08 gera linhas de alturas diferentes em Calibri e em Cambria. Um erro de ' +
+    'frações de ponto por linha se acumula ao longo da página e muda onde cada página termina.'
+  $d = New-Doc
+  $d.Paragraphs.First.Range.Text = 'Espaçamento múltiplo'
+  $d.Paragraphs.First.Range.Style = $d.Styles.Item(-2)
+  foreach ($bloco in @(
+      @{ Fonte = 'Calibri'; Tamanho = 11; Linha = 1.08; Depois = 8 },
+      @{ Fonte = 'Cambria'; Tamanho = 11; Linha = 1.08; Depois = 8 },
+      @{ Fonte = 'Times New Roman'; Tamanho = 12; Linha = 1.5; Depois = 0 },
+      @{ Fonte = 'Georgia'; Tamanho = 10; Linha = 1.15; Depois = 6 })) {
+    for ($i = 1; $i -le 9; $i++) {
+      $p = Add-Para $d "$($bloco.Fonte) $($bloco.Tamanho) pt, múltiplo $($bloco.Linha) ($i). $texto" -1
+      $p.Font.Name = $bloco.Fonte
+      $p.Font.Size = $bloco.Tamanho
+      $p.ParagraphFormat.SpaceBefore = 0
+      $p.ParagraphFormat.SpaceAfter = $bloco.Depois
+      $p.ParagraphFormat.LineSpacingRule = 5   # wdLineSpaceMultiple
+      $p.ParagraphFormat.LineSpacing = [single](12 * $bloco.Linha)
+      $p.ParagraphFormat.WidowControl = $false   # isola a altura de linha (o Textos ainda não faz controle de viúvas)
+    }
+    $null = Add-Para $d '' -1
+  }
+  Save-Doc $d '04-espacamento-multiplo.docx'
 }
 catch {
   Write-Output "ERRO: $($_.Exception.Message)"
