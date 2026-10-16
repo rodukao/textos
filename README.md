@@ -102,7 +102,12 @@ node bench/tools/paragrafos-xml.mjs <arquivo.docx> "trecho do texto" 3  # parág
 node bench/tools/ancora-xml.mjs <arquivo.docx> "trecho"                 # propriedades da imagem/caixa ancorada
 node bench/tools/caixa-de-texto-xml.mjs <arquivo.docx> "trecho"         # conteúdo da caixa de texto
 node bench/tools/estilo-xml.mjs <arquivo.docx> <styleId>                # definição de um estilo e padrões
+node bench/tools/ancoras.mjs <arquivo.docx>                             # objetos flutuantes de cada parágrafo
+node bench/tools/inspecionar.mjs <arquivo.docx> <script.js>             # roda JS na página diagramada (DOM)
 ```
+
+Para documentos reais que não devem ir para o repositório, use uma pasta dentro de `bench/out-reais/`
+(fora do controle de versão) e rode `node bench/run.mjs bench/out-reais/<pasta>`.
 
 Para a altura de linha, que no Word depende das métricas de cada fonte:
 
@@ -129,8 +134,12 @@ Pendências conhecidas, por impacto:
    paginação — o Textos pode deixar a última linha de um parágrafo sozinha no topo da página
 2. **exibição:** posição do texto dentro da linha em espaçamento múltiplo — o Word deixa o espaço
    extra abaixo do texto, o Textos o divide acima e abaixo (≈ 5 px em Times a 1,5)
-3. **exibição:** quebras de linha ao lado de imagens flutuantes
-4. **salvar:** a cópia de compatibilidade com o Word 2007 (`mc:Fallback`) de caixas de texto e as
+3. **exibição:** larguras de texto — o Chromium no Windows (escala 100%) mede e desenha o texto com
+   as larguras ajustadas pelo *hinting* da fonte; o Word usa as larguras de projeto. Em Cambria o
+   texto fica ~1,8% mais largo e algumas linhas quebram antes (em Calibri a diferença é mínima)
+4. **exibição:** página de objetos ancorados — o Word põe o objeto na página do ponto de âncora
+   (ex.: o fim de um parágrafo que continua na página seguinte); o Textos usa o começo do parágrafo
+5. **salvar:** a cópia de compatibilidade com o Word 2007 (`mc:Fallback`) de caixas de texto e as
    marcas de revisão ortográfica (`w:proofErr`) não são mantidas (sem efeito visual no Word atual)
 
 ## Atenção: não atualize para o SuperDoc 2.x
