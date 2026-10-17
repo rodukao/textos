@@ -176,6 +176,21 @@ try {
     $null = Add-Para $d '' -1
   }
   Save-Doc $d '04-espacamento-multiplo.docx'
+
+  # ---------- 5. Linhas viúvas e órfãs ----------
+  # Parágrafos de 1 a 7 linhas com o controle de viúvas/órfãs padrão do Word: em cada quebra de
+  # página o Word evita deixar a primeira linha sozinha no pé ou a última sozinha no topo.
+  $frase = 'O controle de linhas viúvas e órfãs evita que uma linha isolada de um parágrafo fique sozinha no pé ou no topo da página. '
+  $d = New-Doc
+  $d.Paragraphs.First.Range.Text = 'Viúvas e órfãs'
+  $d.Paragraphs.First.Range.Style = $d.Styles.Item(-2)
+  $tamanhos = @(3, 5, 2, 7, 4, 6, 1, 5, 3, 7, 2, 6, 4, 5, 3, 7, 2, 4, 6, 3, 5, 7, 2, 4)
+  for ($i = 0; $i -lt $tamanhos.Count; $i++) {
+    $p = Add-Para $d "($($i + 1)) $($frase * $tamanhos[$i])" -1
+    $p.Font.Name = 'Calibri'
+    $p.Font.Size = 11
+  }
+  Save-Doc $d '05-viuvas-orfas.docx'
 }
 catch {
   Write-Output "ERRO: $($_.Exception.Message)"

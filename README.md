@@ -117,7 +117,9 @@ powershell -File bench/tools/altura-linha-word.ps1 -Fontes "Calibri,Cambria" -Li
 ```
 
 O motor usa a altura simples do Word (métricas GDI da fonte, não 1,15 × tamanho) vezes o múltiplo,
-arredondada para cima em 1/960 de polegada; a tabela de fontes fica em
+sem arredondar: na tela o Word arredonda cada linha para cima em 1/960 de polegada (é o que
+`altura-linha-word.ps1` mede), mas ao imprimir ou salvar em PDF ele usa a altura exata, e as quebras
+de página seguem esta. A tabela de fontes fica em
 `packages/layout-engine/measuring/dom/src/wordLineMetrics.ts` no `textos-engine`.
 
 ### Situação atual
@@ -132,17 +134,18 @@ vazios; as quebras de página do documento de exemplo com várias fontes e espa�
 Word (no Windows a 100%, o navegador usaria larguras ajustadas pelo *hinting*, até ~1,8% maiores em
 Cambria). Custo atual: abrir fica de 2% a 6% mais lento; otimizar depois.
 
+**Quebras de página:** controle de linhas viúvas e órfãs como no Word (ligado a menos que o
+documento o desligue); nos documentos de exemplo as quebras coincidem com as do PDF do Word.
+
 **Objetos flutuantes:** o texto contorna imagens e caixas linha a linha, e cada objeto fica na
 página do seu ponto de âncora, como no Word (inclusive quebrando a página antes da linha da âncora
 quando o Word faz isso).
 
 Pendências conhecidas, por impacto:
 
-1. **exibição:** controle de linhas órfãs/viúvas (ligado por padrão no Word) não é feito na
-   paginação — o Textos pode deixar a última linha de um parágrafo sozinha no topo da página
-2. **exibição:** posição do texto dentro da linha em espaçamento múltiplo — o Word deixa o espaço
+1. **exibição:** posição do texto dentro da linha em espaçamento múltiplo — o Word deixa o espaço
    extra abaixo do texto, o Textos o divide acima e abaixo (≈ 5 px em Times a 1,5)
-3. **salvar:** a cópia de compatibilidade com o Word 2007 (`mc:Fallback`) de caixas de texto e as
+2. **salvar:** a cópia de compatibilidade com o Word 2007 (`mc:Fallback`) de caixas de texto e as
    marcas de revisão ortográfica (`w:proofErr`) não são mantidas (sem efeito visual no Word atual)
 
 ## Atenção: não atualize para o SuperDoc 2.x
