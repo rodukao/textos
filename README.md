@@ -125,8 +125,8 @@ de página seguem esta. A tabela de fontes fica em
 ### Situação atual
 
 **Salvar:** os documentos de exemplo voltam **idênticos no Word** ao salvar sem edição (0% de
-diferença em todas as páginas); nos documentos reais testados, quase todas as páginas também, com
-uma exceção a investigar (pendência 2).
+diferença em todas as páginas); nos documentos reais testados, todas as páginas ficam abaixo de
+0,2% de diferença.
 
 **Altura de linha:** igual à do Word em espaçamento simples, múltiplo, "pelo menos" e em parágrafos
 vazios; as quebras de página do documento de exemplo com várias fontes e espaçamentos coincidem.
@@ -151,9 +151,7 @@ Pendências conhecidas, por impacto:
 
 1. **exibição:** em documentos longos reais, o número de páginas ainda difere do Word em ±1 a 3
    páginas, e o texto logo depois de algumas tabelas fica ~2 px abaixo
-2. **salvar:** num documento real, uma página volta com ~7% de diferença no Word ao salvar sem editar
-   (a investigar)
-3. **salvar:** a cópia de compatibilidade com o Word 2007 (`mc:Fallback`) de caixas de texto e as
+2. **salvar:** a cópia de compatibilidade com o Word 2007 (`mc:Fallback`) de caixas de texto e as
    marcas de revisão ortográfica (`w:proofErr`) não são mantidas (sem efeito visual no Word atual)
 
 ## Atenção: não atualize para o SuperDoc 2.x
