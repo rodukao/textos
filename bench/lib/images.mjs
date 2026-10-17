@@ -2,6 +2,14 @@
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 import { readFile } from 'node:fs/promises';
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { createRequire } from 'node:module';
+import path from 'node:path';
+
+// Fontes que o PDF não embute (o Word às vezes não embute a Arial, por exemplo) são desenhadas com
+// as fontes padrão do pdf.js (Liberation Sans etc., com as mesmas medidas); sem elas o pdf.js usa
+// uma fonte genérica estreita, e a comparação acusa diferença onde não há.
+const standardFontDataUrl =
+  path.join(path.dirname(createRequire(import.meta.url).resolve('pdfjs-dist/package.json')), 'standard_fonts').split(path.sep).join('/') + '/';
 
 /** Resolução de comparação: 96 DPI, a mesma do CSS (1 px = 1/96 pol.). */
 export const DPI = 96;
@@ -11,7 +19,7 @@ export const DPI = 96;
 /** @returns {Promise<Raster[]>} */
 export async function rasterizePdf(pdfPath, dpi = DPI) {
   const data = new Uint8Array(await readFile(pdfPath));
-  const task = getDocument({ data, isEvalSupported: false, verbosity: 0 });
+  const task = getDocument({ data, isEvalSupported: false, verbosity: 0, standardFontDataUrl });
   const pdf = await task.promise;
   const pages = [];
   for (let i = 1; i <= pdf.numPages; i++) {
