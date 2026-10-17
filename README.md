@@ -124,8 +124,9 @@ de página seguem esta. A tabela de fontes fica em
 
 ### Situação atual
 
-**Salvar:** todos os documentos testados (reais e de exemplo) voltam **idênticos no Word** ao
-salvar sem edição — 0% de diferença em todas as páginas.
+**Salvar:** os documentos de exemplo voltam **idênticos no Word** ao salvar sem edição (0% de
+diferença em todas as páginas); nos documentos reais testados, quase todas as páginas também, com
+uma exceção a investigar (pendência 2).
 
 **Altura de linha:** igual à do Word em espaçamento simples, múltiplo, "pelo menos" e em parágrafos
 vazios; as quebras de página do documento de exemplo com várias fontes e espaçamentos coincidem.
@@ -135,7 +136,12 @@ Word (no Windows a 100%, o navegador usaria larguras ajustadas pelo *hinting*, a
 Cambria). Custo atual: abrir fica de 2% a 6% mais lento; otimizar depois.
 
 **Quebras de página:** controle de linhas viúvas e órfãs como no Word (ligado a menos que o
-documento o desligue); nos documentos de exemplo as quebras coincidem com as do PDF do Word.
+documento o desligue), e o espaço antes de um parágrafo some no topo de uma página alcançada por
+quebra natural; nos documentos de exemplo as quebras coincidem com as do PDF do Word.
+
+**Posição do texto na linha:** como no Word — em espaçamento múltiplo (1,5, duplo) o espaço extra
+fica abaixo do texto, em "pelo menos" o texto fica no pé da linha, em "exatamente" a linha de base
+fica a 80% da altura.
 
 **Objetos flutuantes:** o texto contorna imagens e caixas linha a linha, e cada objeto fica na
 página do seu ponto de âncora, como no Word (inclusive quebrando a página antes da linha da âncora
@@ -143,9 +149,11 @@ quando o Word faz isso).
 
 Pendências conhecidas, por impacto:
 
-1. **exibição:** posição do texto dentro da linha em espaçamento múltiplo — o Word deixa o espaço
-   extra abaixo do texto, o Textos o divide acima e abaixo (≈ 5 px em Times a 1,5)
-2. **salvar:** a cópia de compatibilidade com o Word 2007 (`mc:Fallback`) de caixas de texto e as
+1. **exibição:** em documentos longos reais, o número de páginas ainda difere do Word em ±1 a 3
+   páginas, e o texto logo depois de algumas tabelas fica ~2 px abaixo
+2. **salvar:** num documento real, uma página volta com ~7% de diferença no Word ao salvar sem editar
+   (a investigar)
+3. **salvar:** a cópia de compatibilidade com o Word 2007 (`mc:Fallback`) de caixas de texto e as
    marcas de revisão ortográfica (`w:proofErr`) não são mantidas (sem efeito visual no Word atual)
 
 ## Atenção: não atualize para o SuperDoc 2.x
