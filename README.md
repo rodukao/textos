@@ -178,15 +178,31 @@ documento servido pelo Vite, sem passar pela janela de abrir arquivo.
 
 ## Atalhos
 
+Os mesmos do Word em português (a tabela fica em `src/shortcuts.ts` e também alimenta as dicas
+dos botões):
+
 | Ação | Atalho |
 |---|---|
-| Novo | Ctrl+Alt+N |
-| Abrir | Ctrl+O |
-| Salvar / Salvar como | Ctrl+S / Ctrl+Shift+S |
+| Novo / Abrir | Ctrl+O / Ctrl+A (ou Ctrl+F12) |
+| Salvar / Salvar como | Ctrl+B / F12 |
 | Imprimir / PDF | Ctrl+P |
-| Pesquisar no documento | Ctrl+F (Enter: próxima, Shift+Enter: anterior) |
+| Localizar / Substituir | Ctrl+L (ou Ctrl+F) / Ctrl+U |
+| Desfazer / Refazer | Ctrl+Z / Ctrl+R (ou Ctrl+Y) |
+| Selecionar tudo | Ctrl+T |
+| Negrito / Itálico / Sublinhado | Ctrl+N / Ctrl+I / Ctrl+S |
+| Subscrito / Sobrescrito | Ctrl+= / Ctrl+Shift++ |
+| Aumentar / diminuir fonte | Ctrl+Shift+> / Ctrl+Shift+< (de 1 em 1 ponto: Ctrl+] / Ctrl+[) |
+| Limpar formatação | Ctrl+Espaço |
+| Pincel de formatação | Ctrl+Shift+C |
+| Alinhar à esquerda / centralizar / à direita / justificar | Ctrl+Q / Ctrl+E / Ctrl+G / Ctrl+J |
+| Aumentar / diminuir recuo | Ctrl+M / Ctrl+Shift+M |
+| Espaçamento simples / 1,5 / duplo | Ctrl+1 / Ctrl+5 / Ctrl+2 |
+| Título 1 / 2 / 3 / Normal | Ctrl+Alt+1 / 2 / 3 / Ctrl+Shift+N |
+| Mostrar tudo (¶) | Ctrl+* |
+| Inserir link / quebra de página | Ctrl+K / Ctrl+Enter |
 
-(No macOS, use Cmd no lugar de Ctrl.)
+No macOS, use Cmd no lugar de Ctrl. Na versão web, o navegador reserva alguns atalhos para si
+(no Chrome, Ctrl+N, Ctrl+T e Ctrl+Shift+N abrem janela ou guia); no app desktop todos funcionam.
 
 ## Licença
 

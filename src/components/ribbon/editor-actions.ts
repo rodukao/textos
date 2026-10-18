@@ -19,7 +19,23 @@ export interface EditorActions {
   /** Fonte e tamanho padrão do documento (docDefaults + estilo Normal), para parágrafos vazios. */
   defaultFont(): { family: string | null; size: number | null };
   quickStyles(): QuickStyle[];
+  /** Aplica um estilo pelo nome interno do Word ("heading 1", "Normal"). */
+  applyStyleByName(name: string): void;
   wordCount(): number;
+  /** Texto selecionado, se for um trecho curto de uma linha (o Word o põe na caixa "Localizar"). */
+  selectedText(): string;
+  /** Localizar e substituir, como no Word. Os resultados ficam realçados no documento. */
+  find(query: string, options: { caseSensitive: boolean }): FindResult;
+  findNext(backwards: boolean): FindResult;
+  replaceCurrent(text: string): FindResult;
+  replaceAll(text: string): number;
+  clearFind(): void;
+}
+
+/** Posição na lista de ocorrências: "Resultado index+1 de count". */
+export interface FindResult {
+  index: number;
+  count: number;
 }
 
 export interface QuickStyle {
@@ -34,7 +50,10 @@ export interface QuickStyle {
 /** Só o que usamos do editor do motor (a tipagem pública dele não expõe tudo). */
 interface EngineEditor {
   commands: Record<string, (...args: unknown[]) => unknown>;
-  state: { doc: { content: { size: number }; textBetween(from: number, to: number, block: string, leaf: string): string } };
+  state: {
+    doc: { content: { size: number }; textBetween(from: number, to: number, block: string, leaf: string): string };
+    selection?: { from: number; to: number; empty: boolean };
+  };
   view?: { focus(): void };
   focus?: () => void;
   getAttributes(name: string): Record<string, unknown>;
@@ -75,8 +94,17 @@ function previewOf(styles: Record<string, unknown> | undefined): React.CSSProper
 export function createEditorActions(superdoc: SuperDoc | null, ask: AskText): EditorActions {
   const editor = () => (superdoc?.activeEditor ?? null) as unknown as EngineEditor | null;
   const cmd = (name: string, ...args: unknown[]) => editor()?.commands?.[name]?.(...args);
+  // Ocorrências da última busca (o motor só devolve a contagem ao buscar e ao substituir).
+  let findCount = 0;
+  // Ir até a ocorrência põe o foco no documento; no Word ele fica na caixa de pesquisa ou no diálogo.
+  const keepingFocus = <T,>(fn: () => T): T => {
+    const had = document.activeElement as HTMLElement | null;
+    const result = fn();
+    if (had && had !== document.activeElement && had.closest('.find-dialog, .titlebar')) had.focus();
+    return result;
+  };
 
-  return {
+  const actions: EditorActions = {
     focus: () => {
       const e = editor();
       if (e?.focus) e.focus();
@@ -160,6 +188,43 @@ export function createEditorActions(superdoc: SuperDoc | null, ask: AskText): Ed
           preview: previewOf(s.definition?.styles),
         }));
     },
+    applyStyleByName(name) {
+      const style = actions.quickStyles().find((s) => s.name.toLowerCase() === name.toLowerCase());
+      if (style) cmd('setLinkedStyle', style.source);
+    },
+    selectedText: () => {
+      const e = editor();
+      const sel = e?.state?.selection;
+      if (!e || !sel || sel.empty) return '';
+      const text = e.state.doc.textBetween(sel.from, sel.to, '\n', ' ');
+      return text.length <= 255 && !text.includes('\n') ? text : '';
+    },
+    find: (query, options) => keepingFocus(() => {
+      const r = cmd('setSearchSession', query, { caseSensitive: options.caseSensitive, highlight: true }) as
+        | { matches?: unknown[]; activeMatchIndex?: number }
+        | undefined;
+      const count = r?.matches?.length ?? 0;
+      findCount = count;
+      if (count) cmd('goToSearchResult', r!.matches![0]);
+      return { index: count ? (r?.activeMatchIndex ?? 0) : -1, count };
+    }),
+    findNext: (backwards) => keepingFocus(() => {
+      const r = cmd(backwards ? 'previousSearchMatch' : 'nextSearchMatch') as { activeMatchIndex?: number } | undefined;
+      return { index: r?.activeMatchIndex ?? -1, count: findCount };
+    }),
+    replaceCurrent: (text) => keepingFocus(() => {
+      const r = cmd('replaceSearchMatch', text) as { matches?: unknown[]; activeMatchIndex?: number } | undefined;
+      findCount = r?.matches?.length ?? 0;
+      return { index: r?.activeMatchIndex ?? -1, count: findCount };
+    }),
+    replaceAll: (text) => {
+      const r = cmd('replaceAllSearchMatches', text) as { replacedCount?: number } | undefined;
+      return r?.replacedCount ?? 0;
+    },
+    clearFind: () => {
+      findCount = 0;
+      cmd('clearSearchSession');
+    },
     wordCount: () => {
       const doc = editor()?.state?.doc;
       if (!doc) return 0;
@@ -167,4 +232,5 @@ export function createEditorActions(superdoc: SuperDoc | null, ask: AskText): Ed
       return text.split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w)).length;
     },
   };
+  return actions;
 }

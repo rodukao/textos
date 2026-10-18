@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Redo2, Save, Search, Undo2 } from 'lucide-react';
+import { withShortcut } from '../shortcuts';
 
 /**
  * Barra de título do Word: ícone, Barra de Ferramentas de Acesso Rápido (Salvar, Desfazer,
@@ -14,7 +15,6 @@ export function TitleBar(props: {
   onUndo: () => void;
   onRedo: () => void;
   onSearch: (text: string, backwards: boolean) => void;
-  searchRef: React.Ref<HTMLInputElement>;
 }) {
   const [query, setQuery] = useState('');
   const keep = (e: React.MouseEvent) => e.preventDefault();
@@ -22,13 +22,13 @@ export function TitleBar(props: {
     <header className="titlebar">
       <div className="qat">
         <img className="app-icon" src="/icon.svg" alt="" width={18} height={18} />
-        <button type="button" className="qat-button" title="Salvar (Ctrl+S)" onMouseDown={keep} onClick={props.onSave}>
+        <button type="button" className="qat-button" title={withShortcut('Salvar', 'save')} onMouseDown={keep} onClick={props.onSave}>
           <Save size={15} />
         </button>
         <button
           type="button"
           className="qat-button"
-          title="Desfazer (Ctrl+Z)"
+          title={withShortcut('Desfazer', 'undo')}
           disabled={!props.canUndo}
           onMouseDown={keep}
           onClick={props.onUndo}
@@ -38,7 +38,7 @@ export function TitleBar(props: {
         <button
           type="button"
           className="qat-button"
-          title="Refazer (Ctrl+Y)"
+          title={withShortcut('Refazer', 'redo')}
           disabled={!props.canRedo}
           onMouseDown={keep}
           onClick={props.onRedo}
@@ -54,7 +54,6 @@ export function TitleBar(props: {
       <label className="title-search">
         <Search size={14} />
         <input
-          ref={props.searchRef}
           type="search"
           placeholder="Pesquisar no documento"
           value={query}

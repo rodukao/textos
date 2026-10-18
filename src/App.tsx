@@ -3,15 +3,18 @@ import type { PublicToolbarItemId } from 'superdoc/headless-toolbar';
 import { useHeadlessToolbar } from 'superdoc/headless-toolbar/react';
 import { Backstage } from './components/Backstage';
 import type { FileActions } from './components/file-actions';
+import { FindReplace, type FindTab } from './components/FindReplace';
 import { PromptDialog, type PromptRequest } from './components/PromptDialog';
 import { Ribbon } from './components/ribbon/Ribbon';
 import { createEditorActions } from './components/ribbon/editor-actions';
+import { stepFontSize } from './components/ribbon/word-data';
 import { StatusBar, ZOOM_MAX, ZOOM_MIN } from './components/StatusBar';
 import { TitleBar } from './components/TitleBar';
 import { DOCX_FILTER, baseName } from './document/format';
 import { DocumentEditor, type EditorHandle } from './editor/DocumentEditor';
 import { DOCX_MIME } from './engine/superdoc-config';
 import { platform, type FileRef } from './platform';
+import { matchShortcut, type ShortcutAction } from './shortcuts';
 
 const UNTITLED = 'Documento sem título';
 
@@ -78,9 +81,9 @@ export default function App() {
   const [handle, setHandle] = useState<EditorHandle | null>(null);
   const [backstage, setBackstage] = useState(false);
   const [prompt, setPrompt] = useState<PromptRequest | null>(null);
+  const [find, setFind] = useState<{ tab: FindTab; query: string } | null>(null);
   const dirtyRef = useRef(false);
   const workspaceRef = useRef<HTMLElement>(null);
-  const searchRef = useRef<HTMLInputElement>(null);
 
   const superdoc = handle?.superdoc ?? null;
   const { snapshot, execute } = useHeadlessToolbar(superdoc, RIBBON_COMMANDS);
@@ -172,59 +175,86 @@ export default function App() {
     print: () => window.print(),
   };
 
-  // Localizar: Enter vai para a próxima ocorrência, Shift+Enter para a anterior.
-  const searchState = useRef({ query: '', index: -1, matches: [] as unknown[] });
+  // Pesquisa da barra de título: Enter vai para a próxima ocorrência, Shift+Enter para a anterior.
+  const titleSearch = useRef('');
   const search = (query: string, backwards: boolean) => {
-    const target = superdoc?.activeEditor as unknown as { commands: Record<string, (...a: unknown[]) => unknown> } | null;
-    if (!target) return;
-    const s = searchState.current;
-    if (s.query !== query) {
-      const found = target.commands.search?.(query);
-      s.matches = Array.isArray(found) ? found : [];
-      s.query = query;
-      s.index = -1;
+    const r = titleSearch.current === query ? editor.findNext(backwards) : editor.find(query, { caseSensitive: false });
+    titleSearch.current = query;
+    if (!r.count) {
+      titleSearch.current = '';
+      void platform.alert(`O Textos concluiu a pesquisa do documento. "${query}" não foi encontrado.`);
     }
-    if (!s.matches.length) {
-      void platform.alert(`Não encontramos "${query}" no documento.`);
-      return;
-    }
-    s.index = (s.index + (backwards ? -1 : 1) + s.matches.length) % s.matches.length;
-    target.commands.goToSearchResult?.(s.matches[s.index]);
   };
-  // Uma edição pode mudar as ocorrências: a próxima busca recomeça.
+  // Uma edição pode mudar as ocorrências: a próxima pesquisa recomeça.
   const onEdit = useCallback(() => {
-    searchState.current.query = '';
+    titleSearch.current = '';
     onChange();
   }, [onChange]);
 
-  const focusSearch = () => {
-    searchRef.current?.focus();
-    searchRef.current?.select();
+  const openFind = (tab: FindTab) => setFind({ tab, query: editor.selectedText() });
+
+  // Atalhos do Word em português (src/shortcuts.ts).
+  const fontSize = () => parseFloat(String(snapshot.commands['font-size']?.value ?? '')) || editor.defaultFont().size || 11;
+  const runShortcut = (action: ShortcutAction) => {
+    const lineSpacing = (v: number) => execute('line-height', v);
+    const handlers: Record<ShortcutAction, () => unknown> = {
+      new: actions.newDocument,
+      open: actions.open,
+      save: actions.save,
+      saveAs: actions.saveAs,
+      print: actions.print,
+      find: () => openFind('find'),
+      replace: () => openFind('replace'),
+      undo: () => execute('undo'),
+      redo: () => execute('redo'),
+      selectAll: editor.selectAll,
+      bold: () => execute('bold'),
+      italic: () => execute('italic'),
+      underline: () => execute('underline'),
+      subscript: () => editor.toggleVertAlign('subscript'),
+      superscript: () => editor.toggleVertAlign('superscript'),
+      growFont: () => execute('font-size', `${stepFontSize(fontSize(), true)}pt`),
+      shrinkFont: () => execute('font-size', `${stepFontSize(fontSize(), false)}pt`),
+      growFontPoint: () => execute('font-size', `${Math.min(1638, Math.floor(fontSize()) + 1)}pt`),
+      shrinkFontPoint: () => execute('font-size', `${Math.max(1, Math.ceil(fontSize()) - 1)}pt`),
+      clearFormatting: () => execute('clear-formatting'),
+      copyFormat: () => execute('copy-format'),
+      alignLeft: () => execute('text-align', 'left'),
+      alignCenter: () => execute('text-align', 'center'),
+      alignRight: () => execute('text-align', 'right'),
+      justify: () => execute('text-align', 'justify'),
+      indent: () => execute('indent-increase'),
+      outdent: () => execute('indent-decrease'),
+      lineSpacing1: () => lineSpacing(1),
+      lineSpacing15: () => lineSpacing(1.5),
+      lineSpacing2: () => lineSpacing(2),
+      showAll: () => execute('formatting-marks'),
+      heading1: () => editor.applyStyleByName('heading 1'),
+      heading2: () => editor.applyStyleByName('heading 2'),
+      heading3: () => editor.applyStyleByName('heading 3'),
+      normalStyle: () => editor.applyStyleByName('Normal'),
+      link: editor.insertLink,
+      pageBreak: editor.insertPageBreak,
+    };
+    handlers[action]();
   };
 
-  // Atalhos globais. O ref evita registrar o listener de novo a cada render.
-  const actionsRef = useRef({ ...actions, focusSearch });
+  // O ref evita registrar o listener de novo a cada render.
+  const shortcutRef = useRef(runShortcut);
   useLayoutEffect(() => {
-    actionsRef.current = { ...actions, focusSearch };
+    shortcutRef.current = runShortcut;
   });
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (!(e.ctrlKey || e.metaKey)) return;
-      const a = actionsRef.current;
-      const key = e.key.toLowerCase();
-      const handler =
-        key === 's' ? (e.shiftKey ? a.saveAs : a.save)
-        : key === 'o' ? a.open
-        : key === 'p' ? a.print
-        : key === 'n' && e.altKey ? a.newDocument
-        : key === 'f' && !e.shiftKey ? a.focusSearch
-        : null;
-      if (!handler) return;
+      const target = e.target as HTMLElement | null;
+      const inTextField = Boolean(target?.closest?.('input, textarea, select'));
+      const action = matchShortcut(e, inTextField);
+      if (!action) return;
       e.preventDefault();
       e.stopPropagation();
-      handler();
+      shortcutRef.current(action);
     };
-    // Captura: o atalho do app vence o do editor.
+    // Captura: o atalho do Word vence o padrão do motor (que segue o Word em inglês: Ctrl+B negrito…).
     window.addEventListener('keydown', onKeyDown, true);
     return () => window.removeEventListener('keydown', onKeyDown, true);
   }, []);
@@ -263,14 +293,14 @@ export default function App() {
         onUndo={() => execute('undo')}
         onRedo={() => execute('redo')}
         onSearch={search}
-        searchRef={searchRef}
       />
       <Ribbon
         snapshot={snapshot}
         execute={execute}
         editor={editor}
         onOpenFile={() => setBackstage(true)}
-        onFind={focusSearch}
+        onFind={() => openFind('find')}
+        onReplace={() => openFind('replace')}
       />
       <DocumentEditor
         key={doc.key}
@@ -288,6 +318,18 @@ export default function App() {
         zoom={zoom}
         onZoom={(z) => execute('zoom', Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z)))}
       />
+      {find && (
+        <FindReplace
+          tab={find.tab}
+          initialQuery={find.query}
+          editor={editor}
+          onTab={(tab) => setFind({ ...find, tab })}
+          onClose={() => {
+            setFind(null);
+            editor.focus();
+          }}
+        />
+      )}
       {backstage && <Backstage actions={actions} onClose={() => setBackstage(false)} />}
       {prompt && <PromptDialog request={prompt} onDone={() => setPrompt(null)} />}
     </div>

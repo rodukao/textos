@@ -18,6 +18,7 @@ import {
   Paintbrush,
   Pilcrow,
   RemoveFormatting,
+  Replace,
   Ruler,
   Scissors,
   Search,
@@ -61,6 +62,7 @@ import {
   stepFontSize,
 } from './word-data';
 import type { EditorActions } from './editor-actions';
+import { withShortcut } from '../../shortcuts';
 
 export type Execute = (id: PublicToolbarItemId, payload?: unknown) => boolean;
 
@@ -70,6 +72,7 @@ export interface RibbonProps {
   editor: EditorActions;
   onOpenFile: () => void;
   onFind: () => void;
+  onReplace: () => void;
 }
 
 type TabId = 'home' | 'insert' | 'review' | 'view';
@@ -162,7 +165,7 @@ function HomeTab(props: RibbonProps) {
           <RibbonButton
             icon={Paintbrush}
             label="Pincel de Formatação"
-            title="Pincel de Formatação"
+            title={withShortcut('Pincel de Formatação', 'copyFormat')}
             active={active('copy-format')}
             disabled={disabled('copy-format')}
             onClick={run('copy-format')}
@@ -196,29 +199,29 @@ function HomeTab(props: RibbonProps) {
             />
             <RibbonButton
               icon={AArrowUp}
-              title="Aumentar Tamanho da Fonte"
+              title={withShortcut('Aumentar Tamanho da Fonte', 'growFont')}
               disabled={disabled('font-size')}
               onClick={() => setSize(stepFontSize(size ?? 11, true))}
             />
             <RibbonButton
               icon={AArrowDown}
-              title="Diminuir Tamanho da Fonte"
+              title={withShortcut('Diminuir Tamanho da Fonte', 'shrinkFont')}
               disabled={disabled('font-size')}
               onClick={() => setSize(stepFontSize(size ?? 11, false))}
             />
             <RibbonButton
               icon={RemoveFormatting}
-              title="Limpar Toda a Formatação"
+              title={withShortcut('Limpar Toda a Formatação', 'clearFormatting')}
               disabled={disabled('clear-formatting')}
               onClick={run('clear-formatting')}
             />
           </Row>
           <Row>
-            <RibbonButton icon={Bold} title="Negrito (Ctrl+B)" active={active('bold')} disabled={disabled('bold')} onClick={run('bold')} />
-            <RibbonButton icon={Italic} title="Itálico (Ctrl+I)" active={active('italic')} disabled={disabled('italic')} onClick={run('italic')} />
+            <RibbonButton icon={Bold} title={withShortcut('Negrito', 'bold')} active={active('bold')} disabled={disabled('bold')} onClick={run('bold')} />
+            <RibbonButton icon={Italic} title={withShortcut('Itálico', 'italic')} active={active('italic')} disabled={disabled('italic')} onClick={run('italic')} />
             <RibbonButton
               icon={Underline}
-              title="Sublinhado (Ctrl+U)"
+              title={withShortcut('Sublinhado', 'underline')}
               active={active('underline')}
               disabled={disabled('underline')}
               onClick={run('underline')}
@@ -232,13 +235,13 @@ function HomeTab(props: RibbonProps) {
             />
             <RibbonButton
               icon={Subscript}
-              title="Subscrito"
+              title={withShortcut('Subscrito', 'subscript')}
               active={editor.vertAlign() === 'subscript'}
               onClick={() => editor.toggleVertAlign('subscript')}
             />
             <RibbonButton
               icon={Superscript}
-              title="Sobrescrito"
+              title={withShortcut('Sobrescrito', 'superscript')}
               active={editor.vertAlign() === 'superscript'}
               onClick={() => editor.toggleVertAlign('superscript')}
             />
@@ -309,29 +312,29 @@ function HomeTab(props: RibbonProps) {
             />
             <RibbonButton
               icon={ListIndentDecrease}
-              title="Diminuir Recuo"
+              title={withShortcut('Diminuir Recuo', 'outdent')}
               disabled={disabled('indent-decrease')}
               onClick={run('indent-decrease')}
             />
             <RibbonButton
               icon={ListIndentIncrease}
-              title="Aumentar Recuo"
+              title={withShortcut('Aumentar Recuo', 'indent')}
               disabled={disabled('indent-increase')}
               onClick={run('indent-increase')}
             />
             <span className="ribbon-sep" />
             <RibbonButton
               icon={Pilcrow}
-              title="Mostrar Tudo"
+              title={withShortcut('Mostrar Tudo', 'showAll')}
               active={active('formatting-marks')}
               onClick={run('formatting-marks')}
             />
           </Row>
           <Row>
-            <RibbonButton icon={TextAlignStart} title="Alinhar à Esquerda" active={align === 'left'} disabled={disabled('text-align')} onClick={run('text-align', 'left')} />
-            <RibbonButton icon={TextAlignCenter} title="Centralizar" active={align === 'center'} disabled={disabled('text-align')} onClick={run('text-align', 'center')} />
-            <RibbonButton icon={TextAlignEnd} title="Alinhar à Direita" active={align === 'right'} disabled={disabled('text-align')} onClick={run('text-align', 'right')} />
-            <RibbonButton icon={TextAlignJustify} title="Justificar" active={align === 'justify'} disabled={disabled('text-align')} onClick={run('text-align', 'justify')} />
+            <RibbonButton icon={TextAlignStart} title={withShortcut('Alinhar à Esquerda', 'alignLeft')} active={align === 'left'} disabled={disabled('text-align')} onClick={run('text-align', 'left')} />
+            <RibbonButton icon={TextAlignCenter} title={withShortcut('Centralizar', 'alignCenter')} active={align === 'center'} disabled={disabled('text-align')} onClick={run('text-align', 'center')} />
+            <RibbonButton icon={TextAlignEnd} title={withShortcut('Alinhar à Direita', 'alignRight')} active={align === 'right'} disabled={disabled('text-align')} onClick={run('text-align', 'right')} />
+            <RibbonButton icon={TextAlignJustify} title={withShortcut('Justificar', 'justify')} active={align === 'justify'} disabled={disabled('text-align')} onClick={run('text-align', 'justify')} />
             <span className="ribbon-sep" />
             <MenuButton
               icon={ListChevronsUpDown}
@@ -364,8 +367,9 @@ function HomeTab(props: RibbonProps) {
 
       <RibbonGroup label="Edição">
         <Rows>
-          <RibbonButton icon={Search} label="Localizar" title="Localizar (Ctrl+F)" onClick={props.onFind} />
-          <RibbonButton icon={SquareMousePointer} label="Selecionar Tudo" title="Selecionar Tudo (Ctrl+A)" onClick={editor.selectAll} />
+          <RibbonButton icon={Search} label="Localizar" title={withShortcut('Localizar', 'find')} onClick={props.onFind} />
+          <RibbonButton icon={Replace} label="Substituir" title={withShortcut('Substituir', 'replace')} onClick={props.onReplace} />
+          <RibbonButton icon={SquareMousePointer} label="Selecionar Tudo" title={withShortcut('Selecionar Tudo', 'selectAll')} onClick={editor.selectAll} />
         </Rows>
       </RibbonGroup>
     </>
@@ -378,7 +382,7 @@ function InsertTab(props: RibbonProps) {
   return (
     <>
       <RibbonGroup label="Páginas">
-        <RibbonButton large icon={SeparatorHorizontal} label="Quebra de Página" title="Quebra de Página" onClick={editor.insertPageBreak} />
+        <RibbonButton large icon={SeparatorHorizontal} label="Quebra de Página" title={withShortcut('Quebra de Página', 'pageBreak')} onClick={editor.insertPageBreak} />
       </RibbonGroup>
       <RibbonGroup label="Tabelas">
         <MenuButton
@@ -394,7 +398,7 @@ function InsertTab(props: RibbonProps) {
         <RibbonButton large icon={Image} label="Imagens" title="Inserir Imagens" disabled={disabled('image')} onClick={run('image')} />
       </RibbonGroup>
       <RibbonGroup label="Links">
-        <RibbonButton large icon={Link} label="Link" title="Inserir Link" disabled={disabled('link')} onClick={editor.insertLink} />
+        <RibbonButton large icon={Link} label="Link" title={withShortcut('Inserir Link', 'link')} disabled={disabled('link')} onClick={editor.insertLink} />
       </RibbonGroup>
       <RibbonGroup label="Sumário">
         <RibbonButton
