@@ -156,6 +156,9 @@ Pendências conhecidas, por impacto:
    páginas, e o texto logo depois de algumas tabelas fica ~2 px abaixo
 2. **salvar:** a cópia de compatibilidade com o Word 2007 (`mc:Fallback`) de caixas de texto e as
    marcas de revisão ortográfica (`w:proofErr`) não são mantidas (sem efeito visual no Word atual)
+3. **editar:** desfazer (Ctrl+Z) uma mudança de margens, orientação ou tamanho da folha não volta
+   o desenho das páginas (o motor desfaz o atributo do documento, mas não a cópia que usa para
+   paginar)
 
 ## Atenção: não atualize para o SuperDoc 2.x
 
@@ -168,10 +171,15 @@ qualquer dependência, confira as licenças de **toda** a árvore, incluindo as 
 ## Interface
 
 A interface segue o Word (Microsoft 365), para quem vem dele achar cada coisa no mesmo lugar:
-barra de título com Salvar/Desfazer/Refazer e a caixa de pesquisa; guias **Arquivo**, **Página
-Inicial**, **Inserir**, **Revisão** e **Exibir**, com os grupos e nomes do Word em português (Área de
-Transferência, Fonte, Parágrafo, Estilos, Edição…); e a barra de status com "Página X de Y", número
+barra de título com Salvar/Desfazer/Refazer e a caixa de pesquisa (no desktop ela é a barra da
+própria janela, com minimizar, maximizar e fechar); guias **Arquivo**, **Página Inicial**,
+**Inserir**, **Layout**, **Revisão** e **Exibir**, com os grupos e nomes do Word em português (Área
+de Transferência, Fonte, Parágrafo, Estilos, Edição, Configurar Página…); a régua em centímetros,
+com margens e recuos arrastáveis (Exibir > Régua); e a barra de status com "Página X de Y", número
 de palavras e o controle de zoom.
+
+A guia Layout e a régua usam a API de documento do motor (`editor.doc`): seções em polegadas,
+recuos e espaçamentos em twips; ficam em `src/components/ribbon/page-actions.ts`.
 
 Em desenvolvimento, `http://localhost:1420/?abrir=/bench/corpus/01-formatacao.docx` abre um
 documento servido pelo Vite, sem passar pela janela de abrir arquivo.

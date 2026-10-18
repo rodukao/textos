@@ -30,8 +30,19 @@ export interface SaveOptions {
   filters: FileFilter[];
 }
 
+/** Botões da janela (minimizar, maximizar, fechar), quando o app desenha a própria barra de título. */
+export interface WindowControls {
+  minimize(): void;
+  toggleMaximize(): void;
+  close(): void;
+  /** Chama `listener` agora e sempre que a janela for maximizada ou restaurada. */
+  onMaximizedChange(listener: (maximized: boolean) => void): () => void;
+}
+
 export interface Platform {
   readonly kind: 'web' | 'desktop';
+  /** Só no desktop: a janela não tem moldura do sistema e a barra de título é a do Textos. */
+  readonly windowControls?: WindowControls;
   /** Retorna null se o usuário cancelar. */
   openFile(filters: FileFilter[]): Promise<OpenedFile | null>;
   /** Retorna null se o usuário cancelar. */

@@ -321,3 +321,77 @@ export function ColorGlyph(props: { children: ReactNode; color: string }) {
     </span>
   );
 }
+
+/**
+ * Caixa numérica com setas, como "Esquerda: 0 cm" e "Antes: 6 pt" da guia Layout. Digitar e
+ * confirmar com Enter (ou sair da caixa) aplica; as setas somam ou tiram um passo.
+ */
+export function SpinBox(props: {
+  label: string;
+  icon?: LucideIcon;
+  value: number | null;
+  unit: string;
+  step: number;
+  min: number;
+  max: number;
+  title: string;
+  format: (n: number) => string;
+  parse: (text: string) => number | null;
+  onCommit: (value: number) => void;
+}) {
+  const shown = props.value == null ? '' : `${props.format(props.value)} ${props.unit}`;
+  const [text, setText] = useState(shown);
+  useEffect(() => setText(shown), [shown]);
+  const clamp = (n: number) => Math.min(props.max, Math.max(props.min, n));
+  const commit = (n: number | null) => {
+    if (n == null) {
+      setText(shown);
+      return;
+    }
+    props.onCommit(clamp(n));
+  };
+  const stepBy = (dir: 1 | -1) => {
+    const base = props.value ?? 0;
+    // Como no Word, a seta vai para o próximo múltiplo do passo.
+    const next = dir > 0 ? Math.floor(base / props.step + 1e-6) * props.step + props.step : Math.ceil(base / props.step - 1e-6) * props.step - props.step;
+    commit(Math.round(next * 100) / 100);
+  };
+  const Icon = props.icon;
+  return (
+    <label className="spin" title={props.title}>
+      {Icon && <Icon size={14} strokeWidth={1.8} />}
+      <span className="spin-label">{props.label}</span>
+      <span className="spin-box">
+        <input
+          value={text}
+          aria-label={props.title}
+          spellCheck={false}
+          onChange={(e) => setText(e.target.value)}
+          onFocus={(e) => e.target.select()}
+          onBlur={() => {
+            if (text !== shown) commit(props.parse(text));
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              commit(props.parse(text));
+            } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+              e.preventDefault();
+              stepBy(e.key === 'ArrowUp' ? 1 : -1);
+            } else if (e.key === 'Escape') {
+              setText(shown);
+            }
+          }}
+        />
+        <span className="spin-arrows">
+          <button type="button" tabIndex={-1} aria-label="Aumentar" onMouseDown={keepFocus} onClick={() => stepBy(1)}>
+            <ChevronDown size={9} className="spin-up" />
+          </button>
+          <button type="button" tabIndex={-1} aria-label="Diminuir" onMouseDown={keepFocus} onClick={() => stepBy(-1)}>
+            <ChevronDown size={9} />
+          </button>
+        </span>
+      </span>
+    </label>
+  );
+}

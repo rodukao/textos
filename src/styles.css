@@ -1117,3 +1117,253 @@ input {
     margin-left: 0;
   }
 }
+
+/* ---------- Régua ---------- */
+
+.ruler-bar {
+  position: relative;
+  flex-shrink: 0;
+  height: 22px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+  user-select: none;
+  color-scheme: light;
+}
+
+.ruler {
+  position: absolute;
+  top: 3px;
+  height: 16px;
+  background: #ffffff;
+  border: 1px solid #c8c6c4;
+  font-size: 9px;
+  color: #444;
+}
+
+.ruler-margin {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: #d4d4d4;
+}
+
+.ruler-number {
+  position: absolute;
+  top: 2px;
+  transform: translateX(-50%);
+  line-height: 1;
+  pointer-events: none;
+}
+
+.ruler-tick {
+  position: absolute;
+  width: 1px;
+  background: #777;
+  pointer-events: none;
+}
+
+.ruler-tick-half {
+  top: 4px;
+  height: 7px;
+}
+
+.ruler-tick-quarter {
+  top: 6px;
+  height: 3px;
+}
+
+.ruler-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  margin-left: -4px;
+  cursor: ew-resize;
+}
+
+/* Marcadores de recuo: triângulos e o quadradinho do recuo à esquerda, como no Word. */
+.ruler-marker {
+  position: absolute;
+  width: 9px;
+  margin-left: -4.5px;
+  background: #f3f3f3;
+  border: 1px solid #6b6b6b;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.ruler-first {
+  top: -3px;
+  height: 7px;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  background: #6b6b6b;
+}
+
+.ruler-hanging,
+.ruler-right {
+  top: 7px;
+  height: 7px;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  background: #6b6b6b;
+}
+
+.ruler-left {
+  top: 13px;
+  height: 5px;
+}
+
+.ruler-guide {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 0;
+  border-left: 1px dotted #444;
+  pointer-events: none;
+}
+
+.ruler-drag-label {
+  position: absolute;
+  top: 0;
+  margin-left: 8px;
+  padding: 0 4px;
+  background: #ffffe1;
+  border: 1px solid #767676;
+  font-size: 10px;
+  line-height: 14px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.menu-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-heading {
+  padding: 6px 10px 2px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.menu-sep {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--border);
+}
+
+/* Caixas numéricas da guia Layout */
+
+.ribbon-caption {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 0 0 2px;
+}
+
+.spin {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding-right: 8px;
+}
+
+.spin-label {
+  min-width: 52px;
+  font-size: 12px;
+}
+
+.spin-box {
+  display: flex;
+  width: 74px;
+  height: 22px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--popup);
+}
+
+.spin-box:focus-within,
+.spin-box:hover {
+  border-color: var(--muted);
+}
+
+.spin-box input {
+  flex: 1;
+  min-width: 0;
+  padding: 0 4px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 12px;
+}
+
+.spin-arrows {
+  display: flex;
+  flex-direction: column;
+  width: 14px;
+}
+
+.spin-arrows button {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.spin-arrows button:hover {
+  background: var(--hover);
+}
+
+.spin-up {
+  transform: rotate(180deg);
+}
+
+.dialog-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 16px;
+}
+
+/* ---------- Botões da janela (desktop) ---------- */
+
+.titlebar.has-window-controls {
+  grid-template-columns: 1fr auto 1fr auto;
+  padding-right: 0;
+}
+
+.window-controls {
+  display: flex;
+  align-self: stretch;
+  margin-left: 8px;
+}
+
+.window-button {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: default;
+}
+
+.window-button:hover {
+  background: rgb(255 255 255 / 0.16);
+}
+
+.window-close:hover {
+  background: #c42b1c;
+  color: #fff;
+}
+
+@media (max-width: 760px) {
+  .titlebar.has-window-controls {
+    grid-template-columns: auto 1fr auto;
+  }
+}

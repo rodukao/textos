@@ -109,3 +109,33 @@ export function styleDisplayName(name: string): string {
 
 /** Ordem da galeria "Estilos" do Word; os demais estilos rápidos vêm depois, em ordem alfabética. */
 export const QUICK_STYLE_ORDER = ['Normal', 'No Spacing', 'heading 1', 'heading 2', 'heading 3', 'Title', 'Subtitle'];
+
+/** Margens predefinidas do Word em português (cm): superior, inferior, esquerda, direita. */
+export const MARGIN_PRESETS = [
+  { name: 'Normal', top: 2.5, bottom: 2.5, left: 3, right: 3 },
+  { name: 'Estreita', top: 1.27, bottom: 1.27, left: 1.27, right: 1.27 },
+  { name: 'Moderada', top: 2.54, bottom: 2.54, left: 1.91, right: 1.91 },
+  { name: 'Larga', top: 2.54, bottom: 2.54, left: 5.08, right: 5.08 },
+  { name: 'Padrão do Office 2003', top: 2.54, bottom: 2.54, left: 3.17, right: 3.17 },
+];
+
+/** Tamanhos de papel da lista "Tamanho" do Word (cm, em retrato). */
+export const PAPER_SIZES = [
+  { name: 'Carta', width: 21.59, height: 27.94 },
+  { name: 'Ofício', width: 21.59, height: 35.56 },
+  { name: 'Executivo', width: 18.41, height: 26.67 },
+  { name: 'A3', width: 29.7, height: 42 },
+  { name: 'A4', width: 21, height: 29.7 },
+  { name: 'A5', width: 14.8, height: 21 },
+  { name: 'B5 (JIS)', width: 18.2, height: 25.7 },
+];
+
+/** Número no formato do Word em português: "2,5", "1,27", "0". */
+export const formatDecimal = (n: number, digits = 2) =>
+  String(Math.round(n * 10 ** digits) / 10 ** digits).replace('.', ',');
+
+/** Lê "2,5 cm", "2.5", "12 pt"; devolve null se não for número. */
+export function parseDecimal(text: string): number | null {
+  const n = parseFloat(text.replace(',', '.').replace(/[^\d.\-]/g, ''));
+  return Number.isFinite(n) ? n : null;
+}

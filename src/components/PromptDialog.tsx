@@ -1,18 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
 
-export interface PromptRequest {
-  title: string;
+export interface PromptField {
   label: string;
   initial: string;
-  resolve: (value: string | null) => void;
 }
 
-/** Caixa de diálogo de uma linha (ex.: "Inserir Hiperlink"), no lugar do prompt do navegador. */
+export interface PromptRequest {
+  title: string;
+  fields: PromptField[];
+  resolve: (values: string[] | null) => void;
+}
+
+/**
+ * Caixa de diálogo com um ou mais campos (ex.: "Inserir Hiperlink", "Margens Personalizadas"),
+ * no lugar do prompt do navegador.
+ */
 export function PromptDialog({ request, onDone }: { request: PromptRequest; onDone: () => void }) {
-  const [value, setValue] = useState(request.initial);
-  const inputRef = useRef<HTMLInputElement>(null);
-  useEffect(() => inputRef.current?.select(), []);
-  const finish = (result: string | null) => {
+  const [values, setValues] = useState(request.fields.map((f) => f.initial));
+  const firstRef = useRef<HTMLInputElement>(null);
+  useEffect(() => firstRef.current?.select(), []);
+  const finish = (result: string[] | null) => {
     request.resolve(result);
     onDone();
   };
@@ -25,17 +32,25 @@ export function PromptDialog({ request, onDone }: { request: PromptRequest; onDo
         onMouseDown={(e) => e.stopPropagation()}
         onSubmit={(e) => {
           e.preventDefault();
-          finish(value);
+          finish(values);
         }}
         onKeyDown={(e) => {
           if (e.key === 'Escape') finish(null);
         }}
       >
         <div className="dialog-title">{request.title}</div>
-        <label className="dialog-field">
-          <span>{request.label}</span>
-          <input ref={inputRef} value={value} onChange={(e) => setValue(e.target.value)} />
-        </label>
+        <div className={request.fields.length > 1 ? 'dialog-grid' : undefined}>
+          {request.fields.map((field, i) => (
+            <label key={field.label} className="dialog-field">
+              <span>{field.label}</span>
+              <input
+                ref={i === 0 ? firstRef : undefined}
+                value={values[i]}
+                onChange={(e) => setValues(values.map((v, j) => (j === i ? e.target.value : v)))}
+              />
+            </label>
+          ))}
+        </div>
         <div className="dialog-buttons">
           <button type="submit" className="dialog-ok">
             OK

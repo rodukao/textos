@@ -7,6 +7,8 @@ import { FindReplace, type FindTab } from './components/FindReplace';
 import { PromptDialog, type PromptRequest } from './components/PromptDialog';
 import { Ribbon } from './components/ribbon/Ribbon';
 import { createEditorActions } from './components/ribbon/editor-actions';
+import { createPageActions } from './components/ribbon/page-actions';
+import { Ruler } from './components/Ruler';
 import { stepFontSize } from './components/ribbon/word-data';
 import { StatusBar, ZOOM_MAX, ZOOM_MIN } from './components/StatusBar';
 import { TitleBar } from './components/TitleBar';
@@ -83,18 +85,48 @@ export default function App() {
   const [prompt, setPrompt] = useState<PromptRequest | null>(null);
   const [find, setFind] = useState<{ tab: FindTab; query: string } | null>(null);
   const dirtyRef = useRef(false);
-  const workspaceRef = useRef<HTMLElement>(null);
+  const workspaceRef = useRef<HTMLElement | null>(null);
+  const [workspaceEl, setWorkspaceEl] = useState<HTMLElement | null>(null);
+  const setWorkspace = useCallback((el: HTMLElement | null) => {
+    workspaceRef.current = el;
+    setWorkspaceEl(el);
+  }, []);
 
   const superdoc = handle?.superdoc ?? null;
   const { snapshot, execute } = useHeadlessToolbar(superdoc, RIBBON_COMMANDS);
   if (import.meta.env.DEV) (window as unknown as { toolbarSnapshot?: unknown }).toolbarSnapshot = snapshot;
 
-  const ask = useCallback(
-    (title: string, label: string, initial = '') =>
-      new Promise<string | null>((resolve) => setPrompt({ title, label, initial, resolve })),
+  const askFields = useCallback(
+    (title: string, fields: { label: string; initial: string }[]) =>
+      new Promise<string[] | null>((resolve) => setPrompt({ title, fields, resolve })),
     [],
   );
+  const ask = useCallback(
+    (title: string, label: string, initial = '') =>
+      askFields(title, [{ label, initial }]).then((values) => values?.[0] ?? null),
+    [askFields],
+  );
   const editor = useMemo(() => createEditorActions(superdoc, ask), [superdoc, ask]);
+  const pageActions = useMemo(() => createPageActions(superdoc), [superdoc]);
+
+  // Régua: lembrada entre sessões, como no Word (só neste navegador/computador).
+  const [showRuler, setShowRuler] = useState(() => {
+    try {
+      return localStorage.getItem('textos.regua') === '1';
+    } catch {
+      return false;
+    }
+  });
+  const toggleRuler = () => {
+    setShowRuler((v) => {
+      try {
+        localStorage.setItem('textos.regua', v ? '0' : '1');
+      } catch {
+        // Sem armazenamento local: vale só nesta sessão.
+      }
+      return !v;
+    });
+  };
 
   const setDirty = useCallback((value: boolean) => {
     dirtyRef.current = value;
@@ -301,7 +333,12 @@ export default function App() {
         onOpenFile={() => setBackstage(true)}
         onFind={() => openFind('find')}
         onReplace={() => openFind('replace')}
+        page={pageActions}
+        askFields={askFields}
+        showRuler={showRuler}
+        onToggleRuler={toggleRuler}
       />
+      {showRuler && <Ruler page={pageActions} workspace={workspaceEl} pageIndex={page} revision={snapshot} />}
       <DocumentEditor
         key={doc.key}
         file={doc.file}
@@ -309,7 +346,7 @@ export default function App() {
         onChange={onEdit}
         onPages={onPages}
         onError={showError}
-        workspaceRef={workspaceRef}
+        workspaceRef={setWorkspace}
       />
       <StatusBar
         page={Math.min(page, pages ?? page)}

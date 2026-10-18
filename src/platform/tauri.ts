@@ -8,6 +8,20 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
 export const tauriPlatform: Platform = {
   kind: 'desktop',
 
+  windowControls: {
+    minimize: () => void getCurrentWindow().minimize(),
+    toggleMaximize: () => void getCurrentWindow().toggleMaximize(),
+    // Passa pelo onCloseRequested, que pergunta se há alterações não salvas.
+    close: () => void getCurrentWindow().close(),
+    onMaximizedChange(listener) {
+      const win = getCurrentWindow();
+      const check = () => void win.isMaximized().then(listener);
+      check();
+      const unlisten = win.onResized(check);
+      return () => void unlisten.then((fn) => fn());
+    },
+  },
+
   async openFile(filters): Promise<OpenedFile | null> {
     const path = await open({ multiple: false, directory: false, filters });
     if (!path) return null;

@@ -51,6 +51,8 @@ import {
   Row,
   Rows,
 } from './controls';
+import { LayoutTab, type AskFields } from './LayoutTab';
+import type { PageActions } from './page-actions';
 import { StylesGallery } from './StylesGallery';
 import {
   COMMON_FONTS,
@@ -73,14 +75,19 @@ export interface RibbonProps {
   onOpenFile: () => void;
   onFind: () => void;
   onReplace: () => void;
+  page: PageActions;
+  askFields: AskFields;
+  showRuler: boolean;
+  onToggleRuler: () => void;
 }
 
-type TabId = 'home' | 'insert' | 'review' | 'view';
+type TabId = 'home' | 'insert' | 'layout' | 'review' | 'view';
 
 const TABS: { id: TabId | 'file'; label: string }[] = [
   { id: 'file', label: 'Arquivo' },
   { id: 'home', label: 'Página Inicial' },
   { id: 'insert', label: 'Inserir' },
+  { id: 'layout', label: 'Layout' },
   { id: 'review', label: 'Revisão' },
   { id: 'view', label: 'Exibir' },
 ];
@@ -118,6 +125,7 @@ export function Ribbon(props: RibbonProps) {
       <div className="ribbon" role="tabpanel">
         {tab === 'home' && <HomeTab {...props} />}
         {tab === 'insert' && <InsertTab {...props} />}
+        {tab === 'layout' && <LayoutTab page={props.page} ask={props.askFields} insertPageBreak={props.editor.insertPageBreak} />}
         {tab === 'review' && <ReviewTab {...props} />}
         {tab === 'view' && <ViewTab {...props} />}
       </div>
@@ -488,7 +496,7 @@ function ViewTab(props: RibbonProps) {
     <>
       <RibbonGroup label="Mostrar">
         <Rows>
-          <RibbonButton icon={Ruler} label="Régua" title="Régua" active={active('ruler')} onClick={run('ruler')} />
+          <RibbonButton icon={Ruler} label="Régua" title="Régua" active={props.showRuler} onClick={props.onToggleRuler} />
           <RibbonButton
             icon={Pilcrow}
             label="Marcas de Formatação"
