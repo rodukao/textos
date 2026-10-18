@@ -130,6 +130,8 @@ export function LayoutTab(props: { page: PageActions; ask: AskFields; insertPage
             <div className="menu-list">
               <div className="menu-heading">Quebras de Página</div>
               <MenuItem label="Página" close={close} onSelect={props.insertPageBreak} />
+              <div className="menu-heading">Quebras de Seção</div>
+              <MenuItem label="Próxima Página" close={close} onSelect={page.insertSectionBreak} />
             </div>
           )}
         />

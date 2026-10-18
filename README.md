@@ -156,11 +156,7 @@ Pendências conhecidas, por impacto:
    páginas, e o texto logo depois de algumas tabelas fica ~2 px abaixo
 2. **salvar:** a cópia de compatibilidade com o Word 2007 (`mc:Fallback`) de caixas de texto e as
    marcas de revisão ortográfica (`w:proofErr`) não são mantidas (sem efeito visual no Word atual)
-3. **editar:** desfazer (Ctrl+Z) uma mudança de margens, orientação ou tamanho da folha não volta
-   o desenho das páginas (o motor desfaz o atributo do documento, mas não a cópia que usa para
-   paginar); e "Quebras de Seção" ficou fora da guia Layout porque a seção inserida pelo motor não
-   começa em página nova nem aparece na lista de seções
-4. **interface:** na versão web, o botão Colar só cola o que foi copiado no próprio Textos (colar
+3. **interface:** na versão web, o botão Colar só cola o que foi copiado no próprio Textos (colar
    de outro programa pelo botão depende da permissão do navegador; Ctrl+V sempre funciona)
 
 ## Atenção: não atualize para o SuperDoc 2.x
