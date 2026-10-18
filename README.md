@@ -42,9 +42,12 @@ npm run desktop:build  # instalador desktop em src-tauri/target/release/bundle/
 ```
 src/
   App.tsx                   documento aberto, ações de arquivo e atalhos
-  editor/DocumentEditor.tsx monta o SuperDoc (barra de ferramentas + folhas)
+  editor/DocumentEditor.tsx monta o SuperDoc (as folhas)
   engine/superdoc-config.ts configuração do motor, compartilhada com a bancada
-  components/               FileBar, StatusBar
+  components/               interface no desenho do Word: TitleBar, Backstage (guia Arquivo),
+                            StatusBar (página, palavras, zoom)
+    ribbon/                 faixa de opções (Página Inicial, Inserir, Revisão, Exibir), ligada ao
+                            motor pela barra "headless" do SuperDoc
   document/format.ts        filtros de arquivo (.docx)
   platform/                 ÚNICO lugar que sabe se é web ou desktop
     types.ts                interface Platform
@@ -162,6 +165,17 @@ concorrentes e redistribuí-lo. Isso é incompatível com o Textos. Por isso o m
 linha 1.x (100% AGPL), e nada do 2.x é usado como referência. Antes de adicionar ou atualizar
 qualquer dependência, confira as licenças de **toda** a árvore, incluindo as dependências indiretas.
 
+## Interface
+
+A interface segue o Word (Microsoft 365), para quem vem dele achar cada coisa no mesmo lugar:
+barra de título com Salvar/Desfazer/Refazer e a caixa de pesquisa; guias **Arquivo**, **Página
+Inicial**, **Inserir**, **Revisão** e **Exibir**, com os grupos e nomes do Word em português (Área de
+Transferência, Fonte, Parágrafo, Estilos, Edição…); e a barra de status com "Página X de Y", número
+de palavras e o controle de zoom.
+
+Em desenvolvimento, `http://localhost:1420/?abrir=/bench/corpus/01-formatacao.docx` abre um
+documento servido pelo Vite, sem passar pela janela de abrir arquivo.
+
 ## Atalhos
 
 | Ação | Atalho |
@@ -170,6 +184,7 @@ qualquer dependência, confira as licenças de **toda** a árvore, incluindo as 
 | Abrir | Ctrl+O |
 | Salvar / Salvar como | Ctrl+S / Ctrl+Shift+S |
 | Imprimir / PDF | Ctrl+P |
+| Pesquisar no documento | Ctrl+F (Enter: próxima, Shift+Enter: anterior) |
 
 (No macOS, use Cmd no lugar de Ctrl.)
 

@@ -5,6 +5,7 @@ import { baseSuperDocConfig } from '../engine/superdoc-config';
 
 /** O que o App pode fazer com o documento aberto. */
 export interface EditorHandle {
+  superdoc: SuperDoc;
   exportDocx(): Promise<Blob>;
 }
 
@@ -15,17 +16,17 @@ export interface DocumentEditorProps {
   onChange: () => void;
   onPages: (pages: number) => void;
   onError: (message: string) => void;
+  /** A área rolável das folhas, para a barra de status saber a página visível. */
+  workspaceRef?: React.Ref<HTMLElement>;
 }
 
 /**
- * Barra de ferramentas + folhas de UM documento, usando o motor SuperDoc
- * (lê e grava .docx preservando a formatação do Word).
+ * As folhas de UM documento, usando o motor SuperDoc (lê e grava .docx preservando
+ * a formatação do Word). A faixa de opções é do Textos (components/ribbon) e fala com
+ * o motor pela barra "headless" dele.
  * O App troca a `key` deste componente ao criar/abrir um documento: o motor é
  * recriado do zero, com histórico de desfazer limpo.
  */
-/** Só existe um editor por vez, então um id fixo basta. */
-const TOOLBAR_ID = 'textos-toolbar';
-
 export function DocumentEditor(props: DocumentEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   // Callbacks sempre atualizados, sem recriar o motor a cada render.
@@ -39,11 +40,12 @@ export function DocumentEditor(props: DocumentEditorProps) {
       selector: editorRef.current!,
       document: props.file ?? undefined,
       documentMode: 'editing',
-      // No SuperDoc 1.x a barra é indicada por seletor (id), não por elemento.
-      toolbar: `#${TOOLBAR_ID}`,
       onReady: () => {
         ready = true;
+        // Só em desenvolvimento: para inspecionar o motor pelo console.
+        if (import.meta.env.DEV) (window as unknown as { superdoc?: SuperDoc }).superdoc = superdoc;
         callbacks.current.onReady({
+          superdoc,
           exportDocx: () => superdoc.export({ exportType: ['docx'], triggerDownload: false }),
         });
       },
@@ -66,11 +68,8 @@ export function DocumentEditor(props: DocumentEditorProps) {
   }, []);
 
   return (
-    <>
-      <div className="sd-toolbar" id={TOOLBAR_ID} />
-      <main className="workspace">
-        <div ref={editorRef} />
-      </main>
-    </>
+    <main className="workspace" ref={props.workspaceRef}>
+      <div ref={editorRef} />
+    </main>
   );
 }
