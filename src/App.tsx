@@ -255,8 +255,8 @@ export default function App() {
       alignCenter: () => execute('text-align', 'center'),
       alignRight: () => execute('text-align', 'right'),
       justify: () => execute('text-align', 'justify'),
-      indent: () => execute('indent-increase'),
-      outdent: () => execute('indent-decrease'),
+      indent: () => (pageActions.paragraph()?.isList ? execute('indent-increase') : pageActions.stepIndent(1)),
+      outdent: () => (pageActions.paragraph()?.isList ? execute('indent-decrease') : pageActions.stepIndent(-1)),
       lineSpacing1: () => lineSpacing(1),
       lineSpacing15: () => lineSpacing(1.5),
       lineSpacing2: () => lineSpacing(2),
@@ -314,6 +314,17 @@ export default function App() {
 
   const zoom = Number(snapshot.commands.zoom?.value ?? 100);
 
+  // "Largura da Página" do Word: zoom para a folha ocupar a largura da área do documento.
+  const fitWidth = () => {
+    const ws = workspaceRef.current;
+    const section = pageActions.section();
+    if (!ws || !section) return;
+    const style = getComputedStyle(ws);
+    const available = ws.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    const pagePx = section.width * 96;
+    execute('zoom', Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.floor((available / pagePx) * 100))));
+  };
+
   return (
     <div className="app">
       <TitleBar
@@ -337,6 +348,7 @@ export default function App() {
         askFields={askFields}
         showRuler={showRuler}
         onToggleRuler={toggleRuler}
+        onFitWidth={fitWidth}
       />
       {showRuler && <Ruler page={pageActions} workspace={workspaceEl} pageIndex={page} revision={snapshot} />}
       <DocumentEditor

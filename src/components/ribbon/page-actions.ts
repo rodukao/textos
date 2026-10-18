@@ -35,6 +35,8 @@ export interface ParagraphLayout {
   firstLine: number;
   before: number;
   after: number;
+  /** Item de lista: o recuo anda por nível da lista, não pela tabulação. */
+  isList: boolean;
 }
 
 export interface PageActions {
@@ -47,6 +49,8 @@ export interface PageActions {
   paragraph(): ParagraphLayout | null;
   setIndentation(values: { left?: number; right?: number; firstLine?: number }): void;
   setSpacing(values: { before?: number; after?: number }): void;
+  /** "Aumentar/Diminuir Recuo" do Word: até a próxima parada de tabulação padrão do documento. */
+  stepIndent(direction: 1 | -1): void;
 }
 
 type Xml = { name?: string; attributes?: Record<string, string>; elements?: Xml[] };
@@ -237,7 +241,20 @@ export function createPageActions(superdoc: SuperDoc | null): PageActions {
         firstLine: firstLine ?? fromStyle.firstLine ?? 0,
         before: props.spacing?.before ?? fromStyle.before ?? 0,
         after: props.spacing?.after ?? fromStyle.after ?? 0,
+        isList: Boolean((node.attrs.paragraphProperties as { numberingProperties?: unknown } | undefined)?.numberingProperties),
       };
+    },
+    stepIndent(direction) {
+      const e = editor();
+      const current = this.paragraph();
+      if (!e || !current) return;
+      // Parada de tabulação padrão (w:defaultTabStop; 1,25 cm no Word em português).
+      const settings = e.converter?.convertedXml?.['word/settings.xml'];
+      const root = settings?.name === 'w:settings' ? settings : settings?.elements?.find((x) => x.name === 'w:settings');
+      const tab = num(child(root, 'w:defaultTabStop')?.attributes?.['w:val']) || 709;
+      const left = current.left;
+      const next = direction > 0 ? (Math.floor(left / tab + 1e-6) + 1) * tab : Math.max(0, (Math.ceil(left / tab - 1e-6) - 1) * tab);
+      this.setIndentation({ left: next });
     },
     setIndentation: ({ left, right, firstLine }) =>
       eachParagraph((e, target) => {

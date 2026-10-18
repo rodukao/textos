@@ -15,6 +15,8 @@ export interface EditorActions {
   insertLink(): void;
   vertAlign(): string | null;
   toggleVertAlign(value: 'subscript' | 'superscript'): void;
+  /** Tachado (a barra headless do motor não executa este). */
+  toggleStrike(): void;
   documentFonts(): string[];
   /** Fonte e tamanho padrão do documento (docDefaults + estilo Normal), para parágrafos vazios. */
   defaultFont(): { family: string | null; size: number | null };
@@ -54,7 +56,7 @@ interface EngineEditor {
     doc: { content: { size: number }; textBetween(from: number, to: number, block: string, leaf: string): string };
     selection?: { from: number; to: number; empty: boolean };
   };
-  view?: { focus(): void };
+  view?: { focus(): void; dom: HTMLElement };
   focus?: () => void;
   getAttributes(name: string): Record<string, unknown>;
   converter?: {
@@ -91,6 +93,39 @@ function previewOf(styles: Record<string, unknown> | undefined): React.CSSProper
   };
 }
 
+/** Último copiar/recortar feito no Textos (Ctrl+C, Ctrl+X ou os botões), para o botão Colar. */
+let lastCopied: { html: string; text: string } | null = null;
+if (typeof document !== 'undefined') {
+  const remember = (e: ClipboardEvent) => {
+    // Depois do motor: o evento já tem o conteúdo que ele pôs na área de transferência.
+    const text = e.clipboardData?.getData('text/plain') ?? '';
+    const html = e.clipboardData?.getData('text/html') ?? '';
+    if (text || html) lastCopied = { html, text };
+  };
+  document.addEventListener('copy', remember);
+  document.addEventListener('cut', remember);
+}
+
+/** Área de transferência do sistema, se o navegador permitir em menos de 1 s (pode pedir permissão). */
+async function readSystemClipboard(): Promise<{ html: string; text: string } | null> {
+  const read = (async () => {
+    try {
+      const items = await navigator.clipboard.read();
+      let html = '';
+      let text = '';
+      for (const item of items) {
+        if (!html && item.types.includes('text/html')) html = await (await item.getType('text/html')).text();
+        if (!text && item.types.includes('text/plain')) text = await (await item.getType('text/plain')).text();
+      }
+      return html || text ? { html, text } : null;
+    } catch {
+      return null;
+    }
+  })();
+  const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 1000));
+  return Promise.race([read, timeout]);
+}
+
 export function createEditorActions(superdoc: SuperDoc | null, ask: AskText): EditorActions {
   const editor = () => (superdoc?.activeEditor ?? null) as unknown as EngineEditor | null;
   const cmd = (name: string, ...args: unknown[]) => editor()?.commands?.[name]?.(...args);
@@ -117,23 +152,21 @@ export function createEditorActions(superdoc: SuperDoc | null, ask: AskText): Ed
       document.execCommand('cut');
     },
     paste: () => {
-      // O navegador não deixa um botão disparar o "colar" nativo; lemos a área de transferência
-      // (pede permissão na primeira vez) e inserimos como o Ctrl+V faria.
+      // Um botão não pode disparar o "colar" nativo do navegador. Lemos a área de transferência do
+      // sistema (se o navegador deixar) ou, senão, o último copiar/recortar feito no Textos, e
+      // entregamos ao motor como um evento de colar: passa pela mesma limpeza do Ctrl+V.
       void (async () => {
-        try {
-          const items = await navigator.clipboard.read();
-          for (const item of items) {
-            if (item.types.includes('text/html')) {
-              const html = await (await item.getType('text/html')).text();
-              cmd('insertContent', html, { contentType: 'html' });
-              return;
-            }
-          }
-          const text = await navigator.clipboard.readText();
-          if (text) cmd('insertContent', text);
-        } catch {
-          void platform.alert('Para colar, use Ctrl+V (o navegador não permitiu ler a área de transferência).');
+        const data = (await readSystemClipboard()) ?? lastCopied;
+        const dom = editor()?.view?.dom;
+        if (!data || !dom) {
+          void platform.alert('Para colar o que foi copiado em outro programa, use Ctrl+V.');
+          return;
         }
+        const transfer = new DataTransfer();
+        if (data.html) transfer.setData('text/html', data.html);
+        transfer.setData('text/plain', data.text);
+        actions.focus();
+        dom.dispatchEvent(new ClipboardEvent('paste', { clipboardData: transfer, bubbles: true, cancelable: true }));
       })();
     },
     selectAll: () => {
@@ -159,6 +192,9 @@ export function createEditorActions(superdoc: SuperDoc | null, ask: AskText): Ed
       if (!e) return;
       const current = e.getAttributes('textStyle')?.vertAlign;
       cmd('setMark', 'textStyle', { vertAlign: current === value ? null : value });
+    },
+    toggleStrike: () => {
+      cmd('toggleStrike');
     },
     documentFonts: () => {
       const fonts = editor()?.converter?.getDocumentFonts?.();
@@ -209,7 +245,12 @@ export function createEditorActions(superdoc: SuperDoc | null, ask: AskText): Ed
       return { index: count ? (r?.activeMatchIndex ?? 0) : -1, count };
     }),
     findNext: (backwards) => keepingFocus(() => {
-      const r = cmd(backwards ? 'previousSearchMatch' : 'nextSearchMatch') as { activeMatchIndex?: number } | undefined;
+      const r = cmd(backwards ? 'previousSearchMatch' : 'nextSearchMatch') as
+        | { activeMatchIndex?: number; match?: unknown }
+        | undefined;
+      // O motor avança o índice, mas a ida até a ocorrência feita por dentro do comando não move
+      // a seleção; chamada à parte, move.
+      if (r?.match) cmd('goToSearchResult', r.match);
       return { index: r?.activeMatchIndex ?? -1, count: findCount };
     }),
     replaceCurrent: (text) => keepingFocus(() => {

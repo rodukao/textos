@@ -78,6 +78,7 @@ export interface RibbonProps {
   page: PageActions;
   askFields: AskFields;
   showRuler: boolean;
+  onFitWidth: () => void;
   onToggleRuler: () => void;
 }
 
@@ -239,7 +240,7 @@ function HomeTab(props: RibbonProps) {
               title="Tachado"
               active={active('strikethrough')}
               disabled={disabled('strikethrough')}
-              onClick={run('strikethrough')}
+              onClick={editor.toggleStrike}
             />
             <RibbonButton
               icon={Subscript}
@@ -322,13 +323,13 @@ function HomeTab(props: RibbonProps) {
               icon={ListIndentDecrease}
               title={withShortcut('Diminuir Recuo', 'outdent')}
               disabled={disabled('indent-decrease')}
-              onClick={run('indent-decrease')}
+              onClick={() => (props.page.paragraph()?.isList ? execute('indent-decrease') : props.page.stepIndent(-1))}
             />
             <RibbonButton
               icon={ListIndentIncrease}
               title={withShortcut('Aumentar Recuo', 'indent')}
               disabled={disabled('indent-increase')}
-              onClick={run('indent-increase')}
+              onClick={() => (props.page.paragraph()?.isList ? execute('indent-increase') : props.page.stepIndent(1))}
             />
             <span className="ribbon-sep" />
             <RibbonButton
@@ -530,8 +531,7 @@ function ViewTab(props: RibbonProps) {
           icon={MoveHorizontal}
           label="Largura da Página"
           title="Ajustar à largura da página"
-          active={active('zoom-fit-width')}
-          onClick={run('zoom-fit-width')}
+          onClick={props.onFitWidth}
         />
       </RibbonGroup>
     </>
