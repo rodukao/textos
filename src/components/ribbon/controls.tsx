@@ -21,11 +21,34 @@ export function popupPosition(anchor: HTMLElement | null, width = 320): React.CS
   return { position: 'fixed', top: r.bottom + 2, left: Math.max(4, Math.min(r.left, window.innerWidth - width - 4)) };
 }
 
-export function RibbonGroup(props: { label: string; children: ReactNode; className?: string }) {
+/** Grupo da faixa; `onLauncher` põe no canto o botãozinho que abre a caixa de diálogo do grupo. */
+export function RibbonGroup(props: {
+  label: string;
+  children: ReactNode;
+  className?: string;
+  onLauncher?: () => void;
+  launcherTitle?: string;
+}) {
   return (
     <section className={`ribbon-group ${props.className ?? ''}`} aria-label={props.label}>
       <div className="ribbon-group-body">{props.children}</div>
-      <div className="ribbon-group-label">{props.label}</div>
+      <div className="ribbon-group-label">
+        {props.label}
+        {props.onLauncher && (
+          <button
+            type="button"
+            className="ribbon-launcher"
+            title={props.launcherTitle ?? props.label}
+            aria-label={props.launcherTitle ?? props.label}
+            onMouseDown={keepFocus}
+            onClick={props.onLauncher}
+          >
+            <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true">
+              <path d="M1 1h4M1 1v4M2.5 2.5L7 7M7 4v3H4" fill="none" stroke="currentColor" strokeWidth="1" />
+            </svg>
+          </button>
+        )}
+      </div>
     </section>
   );
 }

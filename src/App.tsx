@@ -4,6 +4,7 @@ import { useHeadlessToolbar } from 'superdoc/headless-toolbar/react';
 import { Backstage } from './components/Backstage';
 import type { FileActions } from './components/file-actions';
 import { FindReplace, type FindTab } from './components/FindReplace';
+import { ParagraphDialog } from './components/ParagraphDialog';
 import { PromptDialog, type PromptRequest } from './components/PromptDialog';
 import { Ribbon } from './components/ribbon/Ribbon';
 import { createEditorActions } from './components/ribbon/editor-actions';
@@ -18,7 +19,9 @@ import { DOCX_MIME } from './engine/superdoc-config';
 import { platform, type FileRef } from './platform';
 import { matchShortcut, type ShortcutAction } from './shortcuts';
 
-const UNTITLED = 'Documento sem título';
+/** Como no Word: cada documento novo da sessão se chama Documento1, Documento2… */
+let newDocuments = 1;
+const untitled = () => `Documento${++newDocuments}`;
 
 /** Comandos do motor cujo estado (ativo, desativado, valor) a faixa e a barra de título mostram. */
 const RIBBON_COMMANDS: PublicToolbarItemId[] = [
@@ -75,7 +78,7 @@ function visiblePage(workspace: HTMLElement | null): number {
 }
 
 export default function App() {
-  const [doc, setDoc] = useState<DocState>({ key: 0, file: null, name: UNTITLED, ref: null });
+  const [doc, setDoc] = useState<DocState>({ key: 0, file: null, name: 'Documento1', ref: null });
   const [dirty, setDirtyState] = useState(false);
   const [pages, setPages] = useState<number | null>(null);
   const [page, setPage] = useState(1);
@@ -84,6 +87,7 @@ export default function App() {
   const [backstage, setBackstage] = useState(false);
   const [prompt, setPrompt] = useState<PromptRequest | null>(null);
   const [find, setFind] = useState<{ tab: FindTab; query: string } | null>(null);
+  const [paragraphDialog, setParagraphDialog] = useState(false);
   const dirtyRef = useRef(false);
   const workspaceRef = useRef<HTMLElement | null>(null);
   const [workspaceEl, setWorkspaceEl] = useState<HTMLElement | null>(null);
@@ -193,7 +197,7 @@ export default function App() {
   const actions: FileActions = {
     newDocument: run(async () => {
       if (!(await confirmDiscard())) return;
-      replaceDocument({ file: null, name: UNTITLED, ref: null });
+      replaceDocument({ file: null, name: untitled(), ref: null });
     }),
     open: run(async () => {
       if (!(await confirmDiscard())) return;
@@ -349,6 +353,7 @@ export default function App() {
         showRuler={showRuler}
         onToggleRuler={toggleRuler}
         onFitWidth={fitWidth}
+        onParagraphDialog={() => setParagraphDialog(true)}
       />
       {showRuler && <Ruler page={pageActions} workspace={workspaceEl} pageIndex={page} revision={snapshot} />}
       <DocumentEditor
@@ -375,6 +380,15 @@ export default function App() {
           onTab={(tab) => setFind({ ...find, tab })}
           onClose={() => {
             setFind(null);
+            editor.focus();
+          }}
+        />
+      )}
+      {paragraphDialog && (
+        <ParagraphDialog
+          page={pageActions}
+          onClose={() => {
+            setParagraphDialog(false);
             editor.focus();
           }}
         />

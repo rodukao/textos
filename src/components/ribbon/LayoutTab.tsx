@@ -25,7 +25,12 @@ const cmToTwips = (centimeters: number) => (centimeters / CM_PER_INCH) * TWIPS_P
  * Guia Layout do Word: Configurar Página (Margens, Orientação, Tamanho, Colunas, Quebras) e
  * Parágrafo (Recuar e Espaçamento), na seção e nos parágrafos do cursor.
  */
-export function LayoutTab(props: { page: PageActions; ask: AskFields; insertPageBreak: () => void }) {
+export function LayoutTab(props: {
+  page: PageActions;
+  ask: AskFields;
+  insertPageBreak: () => void;
+  onParagraphDialog: () => void;
+}) {
   const { page, ask } = props;
   const section = page.section();
   const paragraph = page.paragraph();
@@ -137,7 +142,7 @@ export function LayoutTab(props: { page: PageActions; ask: AskFields; insertPage
         />
       </RibbonGroup>
 
-      <RibbonGroup label="Parágrafo">
+      <RibbonGroup label="Parágrafo" onLauncher={props.onParagraphDialog} launcherTitle="Configurações de Parágrafo">
         <Rows>
           <div className="ribbon-caption">Recuar</div>
           <SpinBox

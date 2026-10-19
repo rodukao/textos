@@ -79,6 +79,7 @@ export interface RibbonProps {
   askFields: AskFields;
   showRuler: boolean;
   onFitWidth: () => void;
+  onParagraphDialog: () => void;
   onToggleRuler: () => void;
 }
 
@@ -126,7 +127,14 @@ export function Ribbon(props: RibbonProps) {
       <div className="ribbon" role="tabpanel">
         {tab === 'home' && <HomeTab {...props} />}
         {tab === 'insert' && <InsertTab {...props} />}
-        {tab === 'layout' && <LayoutTab page={props.page} ask={props.askFields} insertPageBreak={props.editor.insertPageBreak} />}
+        {tab === 'layout' && (
+          <LayoutTab
+            page={props.page}
+            ask={props.askFields}
+            insertPageBreak={props.editor.insertPageBreak}
+            onParagraphDialog={props.onParagraphDialog}
+          />
+        )}
         {tab === 'review' && <ReviewTab {...props} />}
         {tab === 'view' && <ViewTab {...props} />}
       </div>
@@ -162,7 +170,6 @@ function HomeTab(props: RibbonProps) {
   const size = parseSize(sizeState?.value) ?? (sizeState?.active ? null : defaults.size);
   const setSize = (n: number) => execute('font-size', `${n}pt`);
   const align = state('text-align')?.value ?? 'left';
-  const lineHeight = Number(state('line-height')?.value ?? 1);
 
   return (
     <>
@@ -302,7 +309,7 @@ function HomeTab(props: RibbonProps) {
         </Rows>
       </RibbonGroup>
 
-      <RibbonGroup label="Parágrafo">
+      <RibbonGroup label="Parágrafo" onLauncher={props.onParagraphDialog} launcherTitle="Configurações de Parágrafo">
         <Rows>
           <Row>
             <RibbonButton
@@ -349,17 +356,38 @@ function HomeTab(props: RibbonProps) {
               icon={ListChevronsUpDown}
               title="Espaçamento de Linha e Parágrafo"
               disabled={disabled('line-height')}
-              menu={(close) =>
-                LINE_SPACINGS.map((v) => (
-                  <MenuItem
-                    key={v}
-                    label={v.toFixed(v === 1.15 ? 2 : 1).replace('.', ',')}
-                    checked={Math.abs(v - lineHeight) < 0.01}
-                    close={close}
-                    onSelect={() => execute('line-height', v)}
-                  />
-                ))
-              }
+              menu={(close) => {
+                // Marca o valor em vigor no parágrafo, mesmo quando vem do estilo (como no Word).
+                const para = props.page.paragraph();
+                const multiple = para && para.lineRule === 'auto' ? para.line / 240 : null;
+                return (
+                  <div className="menu-list">
+                    {LINE_SPACINGS.map((v) => (
+                      <MenuItem
+                        key={v}
+                        label={v.toFixed(v === 1.15 ? 2 : 1).replace('.', ',')}
+                        checked={multiple != null && Math.abs(v - multiple) < 0.005}
+                        close={close}
+                        onSelect={() => execute('line-height', v)}
+                      />
+                    ))}
+                    <div className="menu-sep" />
+                    <MenuItem label="Opções de Espaçamento de Linha..." close={close} onSelect={props.onParagraphDialog} />
+                    <div className="menu-sep" />
+                    {/* Como no Word: 12 pt ao adicionar; o rótulo muda conforme já haja espaço. */}
+                    <MenuItem
+                      label={para?.before ? 'Remover Espaço Antes do Parágrafo' : 'Adicionar Espaço Antes do Parágrafo'}
+                      close={close}
+                      onSelect={() => props.page.setSpacing({ before: para?.before ? 0 : 240 })}
+                    />
+                    <MenuItem
+                      label={para?.after ? 'Remover Espaço Depois do Parágrafo' : 'Adicionar Espaço Depois do Parágrafo'}
+                      close={close}
+                      onSelect={() => props.page.setSpacing({ after: para?.after ? 0 : 240 })}
+                    />
+                  </div>
+                );
+              }}
             />
           </Row>
         </Rows>

@@ -35,9 +35,21 @@ export interface ParagraphLayout {
   firstLine: number;
   before: number;
   after: number;
+  /** Entrelinha: em 240 avos de linha (regra "auto") ou em twips ("exact"/"atLeast"). */
+  line: number;
+  lineRule: LineRule;
+  /** "Não adicionar espaço entre parágrafos do mesmo estilo". */
+  contextualSpacing: boolean;
+  alignment: Alignment;
   /** Item de lista: o recuo anda por nível da lista, não pela tabulação. */
   isList: boolean;
 }
+
+export type LineRule = 'auto' | 'exact' | 'atLeast';
+export type Alignment = 'left' | 'center' | 'right' | 'justify';
+
+/** Entrelinha simples do Word quando nada a define (docDefaults sem w:spacing). */
+const SINGLE_LINE = 240;
 
 export interface PageActions {
   section(): SectionState | null;
@@ -48,7 +60,9 @@ export interface PageActions {
   insertSectionBreak(): void;
   paragraph(): ParagraphLayout | null;
   setIndentation(values: { left?: number; right?: number; firstLine?: number }): void;
-  setSpacing(values: { before?: number; after?: number }): void;
+  setSpacing(values: { before?: number; after?: number; line?: number; lineRule?: LineRule }): void;
+  setAlignment(alignment: Alignment): void;
+  setContextualSpacing(value: boolean): void;
   /** "Aumentar/Diminuir Recuo" do Word: até a próxima parada de tabulação padrão do documento. */
   stepIndent(direction: 1 | -1): void;
 }
@@ -69,7 +83,14 @@ interface DocApiEditor {
       setColumns(input: object): unknown;
     };
     selection: { current(): { target?: { segments?: { blockId: string }[] } } };
-    format: { paragraph: { setIndentation(input: object): unknown; setSpacing(input: object): unknown } };
+    format: {
+      paragraph: {
+        setIndentation(input: object): unknown;
+        setSpacing(input: object): unknown;
+        setAlignment(input: object): unknown;
+        setFlowOptions(input: object): unknown;
+      };
+    };
   };
   state: {
     doc: { descendants(fn: (node: PmNode, pos: number) => boolean | void): void };
@@ -98,7 +119,15 @@ function readPPr(pPr: Xml | undefined): Partial<ParagraphLayout> {
   if (spacing) {
     if (num(spacing['w:before']) != null) out.before = num(spacing['w:before']);
     if (num(spacing['w:after']) != null) out.after = num(spacing['w:after']);
+    if (num(spacing['w:line']) != null) {
+      out.line = num(spacing['w:line']);
+      out.lineRule = (spacing['w:lineRule'] as LineRule | undefined) ?? 'auto';
+    }
   }
+  const contextual = child(pPr, 'w:contextualSpacing');
+  if (contextual) out.contextualSpacing = contextual.attributes?.['w:val'] !== '0' && contextual.attributes?.['w:val'] !== 'false';
+  const jc = child(pPr, 'w:jc')?.attributes?.['w:val'];
+  if (jc) out.alignment = jc === 'both' || jc === 'distribute' ? 'justify' : jc === 'end' ? 'right' : jc === 'start' ? 'left' : (jc as Alignment);
   if (ind) {
     const left = num(ind['w:left'] ?? ind['w:start']);
     const right = num(ind['w:right'] ?? ind['w:end']);
@@ -229,8 +258,11 @@ export function createPageActions(superdoc: SuperDoc | null): PageActions {
       if (!e || !node) return null;
       const props = (node.attrs.paragraphProperties ?? {}) as {
         styleId?: string;
-        spacing?: { before?: number; after?: number };
+        spacing?: { before?: number; after?: number; line?: number; lineRule?: LineRule };
         indent?: { left?: number; right?: number; firstLine?: number; hanging?: number };
+        contextualSpacing?: boolean;
+        justification?: string;
+        numberingProperties?: unknown;
       };
       const fromStyle = styleLayout(e, props.styleId);
       const ind = props.indent ?? {};
@@ -241,7 +273,11 @@ export function createPageActions(superdoc: SuperDoc | null): PageActions {
         firstLine: firstLine ?? fromStyle.firstLine ?? 0,
         before: props.spacing?.before ?? fromStyle.before ?? 0,
         after: props.spacing?.after ?? fromStyle.after ?? 0,
-        isList: Boolean((node.attrs.paragraphProperties as { numberingProperties?: unknown } | undefined)?.numberingProperties),
+        line: props.spacing?.line ?? fromStyle.line ?? SINGLE_LINE,
+        lineRule: props.spacing?.line != null ? (props.spacing.lineRule ?? 'auto') : (fromStyle.lineRule ?? 'auto'),
+        contextualSpacing: props.contextualSpacing ?? fromStyle.contextualSpacing ?? false,
+        alignment: (props.justification === 'both' ? 'justify' : (props.justification as Alignment | undefined)) ?? fromStyle.alignment ?? 'left',
+        isList: Boolean(props.numberingProperties),
       };
     },
     stepIndent(direction) {
@@ -267,12 +303,19 @@ export function createPageActions(superdoc: SuperDoc | null): PageActions {
         }
         e.doc!.format.paragraph.setIndentation(input);
       }),
-    setSpacing: ({ before, after }) =>
+    setSpacing: ({ before, after, line, lineRule }) =>
       eachParagraph((e, target) => {
         const input: Record<string, unknown> = { target };
         if (before != null) input.before = Math.max(0, Math.round(before));
         if (after != null) input.after = Math.max(0, Math.round(after));
+        if (line != null) {
+          input.line = Math.max(1, Math.round(line));
+          input.lineRule = lineRule ?? 'auto';
+        }
         e.doc!.format.paragraph.setSpacing(input);
       }),
+    setAlignment: (alignment) => eachParagraph((e, target) => e.doc!.format.paragraph.setAlignment({ target, alignment })),
+    setContextualSpacing: (value) =>
+      eachParagraph((e, target) => e.doc!.format.paragraph.setFlowOptions({ target, contextualSpacing: value })),
   };
 }

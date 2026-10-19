@@ -1367,3 +1367,102 @@ input {
     grid-template-columns: auto 1fr auto;
   }
 }
+
+/* ---------- Iniciador de caixa de diálogo do grupo (canto da faixa) ---------- */
+
+.ribbon-group-label {
+  position: relative;
+  padding-right: 14px;
+  padding-left: 14px;
+}
+
+.ribbon-launcher {
+  position: absolute;
+  right: -4px;
+  bottom: 3px;
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.ribbon-launcher:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+/* ---------- Caixa Parágrafo ---------- */
+
+.paragraph-dialog {
+  width: min(520px, calc(100vw - 32px));
+}
+
+.dialog-tab {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding-bottom: 4px;
+  border-bottom: 3px solid var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.dialog-section {
+  margin: 0 0 12px;
+  padding: 8px 12px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.dialog-section legend {
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pd-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+}
+
+.pd-field {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  align-items: center;
+  gap: 6px;
+}
+
+.pd-field input,
+.pd-field select {
+  height: 26px;
+  min-width: 0;
+  padding: 0 6px;
+  border: 1px solid var(--muted);
+  border-radius: 4px;
+  background: transparent;
+}
+
+.pd-field input:disabled,
+.pd-field select:disabled {
+  opacity: 0.5;
+}
+
+.pd-check {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 760px) {
+  .pd-grid {
+    grid-template-columns: 1fr;
+  }
+}

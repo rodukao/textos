@@ -1,7 +1,19 @@
 import { useEffect, useRef } from 'react';
 import { SuperDoc } from 'superdoc';
 import 'superdoc/style.css';
-import { baseSuperDocConfig } from '../engine/superdoc-config';
+import blankDocumentUrl from '../document/documento-em-branco.docx?url';
+import { DOCX_MIME, baseSuperDocConfig } from '../engine/superdoc-config';
+
+/**
+ * "Documento em branco" do Word em português, gerado pelo próprio Word: Calibri 11, 8 pt depois
+ * do parágrafo, entrelinha 1,08, A4 com margens de 2,5 e 3 cm, idioma pt-BR e os estilos rápidos
+ * (Título 1, Sem Espaçamento…). O modelo interno do motor era outro (Arial 12, sem espaço entre
+ * parágrafos, em inglês).
+ */
+async function blankDocument(): Promise<File> {
+  const bytes = await (await fetch(blankDocumentUrl)).arrayBuffer();
+  return new File([bytes], 'Documento1.docx', { type: DOCX_MIME });
+}
 
 /** O que o App pode fazer com o documento aberto. */
 export interface EditorHandle {
@@ -35,33 +47,46 @@ export function DocumentEditor(props: DocumentEditorProps) {
 
   useEffect(() => {
     let ready = false;
-    const superdoc = new SuperDoc({
-      ...baseSuperDocConfig,
-      selector: editorRef.current!,
-      document: props.file ?? undefined,
-      documentMode: 'editing',
-      onReady: () => {
-        ready = true;
-        // Só em desenvolvimento: para inspecionar o motor pelo console.
-        if (import.meta.env.DEV) (window as unknown as { superdoc?: SuperDoc }).superdoc = superdoc;
-        callbacks.current.onReady({
-          superdoc,
-          exportDocx: () => superdoc.export({ exportType: ['docx'], triggerDownload: false }),
-        });
-      },
-      // Atualizações durante o carregamento não são edições do usuário.
-      onEditorUpdate: () => {
-        if (ready) callbacks.current.onChange();
-      },
-      onPaginationUpdate: ({ totalPages }) => callbacks.current.onPages(totalPages),
-      onException: (e) => {
-        const err = (e as { error?: unknown }).error;
-        callbacks.current.onError(err instanceof Error ? err.message : String(err ?? 'erro desconhecido'));
-      },
-    });
+    let cancelled = false;
+    let superdoc: SuperDoc | null = null;
+
+    const createEngine = (file: File | null) =>
+      new SuperDoc({
+        ...baseSuperDocConfig,
+        selector: editorRef.current!,
+        document: file ?? undefined,
+        documentMode: 'editing',
+        onReady: () => {
+          ready = true;
+          const instance = superdoc!;
+          // Só em desenvolvimento: para inspecionar o motor pelo console.
+          if (import.meta.env.DEV) (window as unknown as { superdoc?: SuperDoc }).superdoc = instance;
+          callbacks.current.onReady({
+            superdoc: instance,
+            exportDocx: () => instance.export({ exportType: ['docx'], triggerDownload: false }),
+          });
+        },
+        // Atualizações durante o carregamento não são edições do usuário.
+        onEditorUpdate: () => {
+          if (ready) callbacks.current.onChange();
+        },
+        onPaginationUpdate: ({ totalPages }) => callbacks.current.onPages(totalPages),
+        onException: (e) => {
+          const err = (e as { error?: unknown }).error;
+          callbacks.current.onError(err instanceof Error ? err.message : String(err ?? 'erro desconhecido'));
+        },
+      });
+
+    void (async () => {
+      // Sem arquivo: o "Documento em branco" do Word (se não carregar, o modelo do motor).
+      const file = props.file ?? (await blankDocument().catch(() => null));
+      if (!cancelled) superdoc = createEngine(file);
+    })();
+
     return () => {
+      cancelled = true;
       callbacks.current.onReady(null);
-      superdoc.destroy();
+      superdoc?.destroy();
     };
     // O documento só muda com uma nova `key`; o motor é criado uma vez por montagem.
     // eslint-disable-next-line react-hooks/exhaustive-deps

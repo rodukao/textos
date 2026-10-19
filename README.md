@@ -177,8 +177,14 @@ de Transferência, Fonte, Parágrafo, Estilos, Edição, Configurar Página…);
 com margens e recuos arrastáveis (Exibir > Régua); e a barra de status com "Página X de Y", número
 de palavras e o controle de zoom.
 
-A guia Layout e a régua usam a API de documento do motor (`editor.doc`): seções em polegadas,
-recuos e espaçamentos em twips; ficam em `src/components/ribbon/page-actions.ts`.
+A guia Layout, a régua e a caixa **Parágrafo** (aberta pelo canto dos grupos Parágrafo ou por
+"Opções de Espaçamento de Linha...") usam a API de documento do motor (`editor.doc`): seções em
+polegadas, recuos e espaçamentos em twips; ficam em `src/components/ribbon/page-actions.ts`.
+
+Um documento novo ("Documento1", "Documento2"…) parte de `src/document/documento-em-branco.docx`,
+o "Documento em branco" gerado pelo próprio Word em português: Calibri 11, 8 pt depois do
+parágrafo, entrelinha 1,08, A4 com margens de 2,5 e 3 cm, idioma pt-BR, tabulação de 1,25 cm e os
+estilos rápidos do Word (sem dados pessoais nas propriedades).
 
 Em desenvolvimento, `http://localhost:1420/?abrir=/bench/corpus/01-formatacao.docx` abre um
 documento servido pelo Vite, sem passar pela janela de abrir arquivo.

@@ -73,7 +73,7 @@ export function Ruler(props: {
   const at = (h: Handle, base: number) => (drag?.handle === h ? drag.x : base);
   const marginLeft = at('marginLeft', m.left);
   const marginRight = at('marginRight', W - m.right);
-  const p = paragraph ?? { left: 0, right: 0, firstLine: 0, before: 0, after: 0, isList: false };
+  const p = paragraph ?? { left: 0, right: 0, firstLine: 0 };
   let leftIndent = marginLeft + twipsToIn(p.left);
   let firstLine = leftIndent + twipsToIn(p.firstLine);
   if (drag?.handle === 'leftIndent') {
